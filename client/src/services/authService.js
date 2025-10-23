@@ -8,23 +8,13 @@ const API_BASE_URL = 'http://localhost:3001/api';
 WebBrowser.maybeCompleteAuthSession();
 
 export const authService = {
-  async signup({ name, email, password }) {
-    const response = await axios.post(`${API_BASE_URL}/auth/signup`, { name, email, password });
-    return response.data;
-  },
-
-  async login({ email, password }) {
-    const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
-    return response.data;
-  },
-
   async loginWithGoogle() {
     try {
       const redirectUri = AuthSession.makeRedirectUri({ useProxy: true });
       const authUrl = `${API_BASE_URL}/auth/google?redirect_uri=${encodeURIComponent(redirectUri)}`;
 
-      // Use AuthSession so the proxy can capture and pass params back
-      const result = await AuthSession.startAsync({ authUrl, returnUrl: redirectUri });
+      // Use the modern WebBrowser.openAuthSessionAsync method
+      const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
 
       if (result.type === 'success') {
         let token = result.params?.token;

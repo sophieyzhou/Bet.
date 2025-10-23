@@ -13,7 +13,14 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:8081', 'http://localhost:8082', 'http://localhost:3001'], // React Native dev server
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:8081', 
+    'http://localhost:8082', 
+    'http://localhost:3001',
+    'http://localhost:19006', // Expo web development server
+    'http://localhost:19000'  // Alternative Expo web port
+  ],
   credentials: true
 }));
 app.use(express.json());
