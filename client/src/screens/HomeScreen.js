@@ -13,14 +13,9 @@ export default function HomeScreen() {
   const { user, logout } = useAuth();
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', onPress: logout }
-      ]
-    );
+    console.log('Logout button pressed');
+    console.log('Calling logout function directly');
+    logout();
   };
 
   return (

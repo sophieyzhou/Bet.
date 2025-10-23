@@ -103,13 +103,29 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    console.log('Logout function called');
     try {
-      await authService.logout();
+      console.log('Clearing local storage...');
+      // Clear local storage and state
       await deleteItemAsync('authToken');
       setUser(null);
       setIsAuthenticated(false);
+      console.log('Local logout completed successfully');
+      
+      // Optionally call server logout (but not required for JWT)
+      try {
+        console.log('Attempting server logout...');
+        await authService.logout();
+        console.log('Server logout completed');
+      } catch (serverError) {
+        // Server logout failed, but local logout still succeeded
+        console.log('Server logout failed, but local logout succeeded:', serverError.message);
+      }
     } catch (error) {
       console.error('Logout failed:', error);
+      // Even if there's an error, try to clear local state
+      setUser(null);
+      setIsAuthenticated(false);
     }
   };
 
