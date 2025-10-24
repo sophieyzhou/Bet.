@@ -103,7 +103,7 @@ export default function RuleInput({ onAddRule, onCancel }) {
 const styles = StyleSheet.create({
     container: {
         padding: 15,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: '#1A1A1A',
         borderRadius: 8,
         marginBottom: 15,
     },
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     input: {
-        backgroundColor: '#fff',
+        backgroundColor: '#2A2A2A',
         borderWidth: 1,
         borderColor: '#e1e8ed',
         borderRadius: 6,

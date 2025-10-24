@@ -32,9 +32,9 @@ function AppNavigator() {
                 headerShown: true,
                 title: 'Group',
                 headerStyle: {
-                  backgroundColor: '#fff',
+                  backgroundColor: '#1A1A1A',
                 },
-                headerTintColor: '#2c3e50',
+                headerTintColor: '#ffffff',
                 headerTitleStyle: {
                   fontWeight: 'bold',
                 },

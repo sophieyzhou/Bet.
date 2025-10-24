@@ -160,7 +160,7 @@ export default function LeaderboardScreen({ route, navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: '#1A1A1A',
     },
     loadingContainer: {
         flex: 1,
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     loadingText: {
         marginTop: 10,
         fontSize: 16,
-        color: '#7f8c8d',
+        color: '#cccccc',
     },
     errorContainer: {
         flex: 1,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     headerCard: {
-        backgroundColor: '#fff',
+        backgroundColor: '#2A2A2A',
         padding: 20,
         marginBottom: 15,
         shadowColor: '#000',
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     leaderboardSection: {
-        backgroundColor: '#fff',
+        backgroundColor: '#2A2A2A',
         padding: 20,
         marginBottom: 20,
         shadowColor: '#000',

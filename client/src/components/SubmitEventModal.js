@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     modalContent: {
-        backgroundColor: '#fff',
+        backgroundColor: '#2A2A2A',
         borderRadius: 15,
         padding: 20,
         width: '100%',
@@ -201,14 +201,14 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#e1e8ed',
         borderRadius: 8,
-        backgroundColor: '#fff',
+        backgroundColor: '#2A2A2A',
         marginBottom: 10,
     },
     picker: {
         height: 50,
     },
     ruleInfo: {
-        backgroundColor: '#f8f9fa',
+        backgroundColor: '#1A1A1A',
         padding: 12,
         borderRadius: 8,
         marginBottom: 10,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     input: {
-        backgroundColor: '#fff',
+        backgroundColor: '#2A2A2A',
         borderWidth: 1,
         borderColor: '#e1e8ed',
         borderRadius: 8,

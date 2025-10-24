@@ -132,7 +132,7 @@ const EventCard = ({ event, currentUserId, onVoteToVeto }) => {
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: '#fff',
+        backgroundColor: '#2A2A2A',
         borderRadius: 10,
         padding: 15,
         marginBottom: 15,

@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     modalContent: {
-        backgroundColor: '#fff',
+        backgroundColor: '#2A2A2A',
         borderRadius: 15,
         padding: 25,
         width: '100%',
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     input: {
-        backgroundColor: '#f8f9fa',
+        backgroundColor: '#1A1A1A',
         borderWidth: 1,
         borderColor: '#e1e8ed',
         borderRadius: 8,

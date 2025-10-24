@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     modalContent: {
-        backgroundColor: '#fff',
+        backgroundColor: '#2A2A2A',
         borderRadius: 15,
         padding: 20,
         width: '100%',
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     input: {
-        backgroundColor: '#fff',
+        backgroundColor: '#2A2A2A',
         borderWidth: 1,
         borderColor: '#e1e8ed',
         borderRadius: 8,
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     },
     ruleCard: {
         flexDirection: 'row',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: '#1A1A1A',
         padding: 12,
         borderRadius: 8,
         marginTop: 10,
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
     },
     // Success Modal Styles
     successModal: {
-        backgroundColor: '#fff',
+        backgroundColor: '#2A2A2A',
         borderRadius: 15,
         padding: 30,
         width: '90%',
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     codeContainer: {
-        backgroundColor: '#f8f9fa',
+        backgroundColor: '#1A1A1A',
         paddingVertical: 20,
         paddingHorizontal: 40,
         borderRadius: 10,

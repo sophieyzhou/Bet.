@@ -231,7 +231,7 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#1A1A1A',
   },
   header: {
     flexDirection: 'row',
@@ -239,14 +239,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#1A1A1A',
     borderBottomWidth: 1,
-    borderBottomColor: '#e1e8ed',
+    borderBottomColor: '#333333',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: '#ffffff',
   },
   headerButtons: {
     flexDirection: 'row',
@@ -283,13 +283,13 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#7f8c8d',
+    color: '#cccccc',
   },
   listContainer: {
     padding: 20,
   },
   groupCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#2A2A2A',
     padding: 20,
     borderRadius: 12,
     marginBottom: 15,
@@ -348,13 +348,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: '#ffffff',
     marginBottom: 10,
     textAlign: 'center',
   },
   emptySubtitle: {
     fontSize: 16,
-    color: '#7f8c8d',
+    color: '#cccccc',
     textAlign: 'center',
     lineHeight: 22,
   },

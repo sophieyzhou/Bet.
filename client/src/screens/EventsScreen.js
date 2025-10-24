@@ -194,7 +194,7 @@ export default function EventsScreen({ route }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fa',
+        backgroundColor: '#1A1A1A',
     },
     loadingContainer: {
         flex: 1,
@@ -204,14 +204,14 @@ const styles = StyleSheet.create({
     loadingText: {
         marginTop: 10,
         fontSize: 16,
-        color: '#7f8c8d',
+        color: '#cccccc',
     },
     filtersContainer: {
         flexDirection: 'row',
         padding: 15,
-        backgroundColor: '#fff',
+        backgroundColor: '#2A2A2A',
         borderBottomWidth: 1,
-        borderBottomColor: '#e1e8ed',
+        borderBottomColor: '#333333',
     },
     filterButton: {
         paddingHorizontal: 15,
@@ -243,12 +243,12 @@ const styles = StyleSheet.create({
     emptyTitle: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#2c3e50',
+        color: '#ffffff',
         marginBottom: 8,
     },
     emptySubtitle: {
         fontSize: 16,
-        color: '#7f8c8d',
+        color: '#cccccc',
     },
     fab: {
         position: 'absolute',

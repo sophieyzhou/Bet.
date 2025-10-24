@@ -58,11 +58,11 @@ export default function GroupTabsScreen({ route, navigation }) {
         <Tab.Navigator
             screenOptions={{
                 tabBarActiveTintColor: '#4285f4',
-                tabBarInactiveTintColor: '#7f8c8d',
+                tabBarInactiveTintColor: '#cccccc',
                 tabBarStyle: {
-                    backgroundColor: '#fff',
+                    backgroundColor: '#1A1A1A',
                     borderTopWidth: 1,
-                    borderTopColor: '#e1e8ed',
+                    borderTopColor: '#333333',
                 },
                 headerShown: false,
             }}
@@ -95,11 +95,11 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8f9fa',
+        backgroundColor: '#1A1A1A',
     },
     loadingText: {
         marginTop: 10,
         fontSize: 16,
-        color: '#7f8c8d',
+        color: '#cccccc',
     },
 });
