@@ -6,6 +6,7 @@ const session = require('express-session');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
+const groupRoutes = require('./routes/groups');
 const { initializePassport } = require('./middleware/auth');
 
 const app = express();
@@ -14,9 +15,9 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors({
   origin: [
-    'http://localhost:3000', 
-    'http://localhost:8081', 
-    'http://localhost:8082', 
+    'http://localhost:3000',
+    'http://localhost:8081',
+    'http://localhost:8082',
     'http://localhost:3001',
     'http://localhost:19006', // Expo web development server
     'http://localhost:19000'  // Alternative Expo web port
@@ -46,11 +47,12 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/bet', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/groups', groupRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -7,6 +7,7 @@ import * as Linking from 'expo-linking';
 
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
+import LeaderboardScreen from './src/screens/LeaderboardScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 
 const Stack = createStackNavigator();
@@ -16,11 +17,36 @@ function AppNavigator() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator>
         {isAuthenticated ? (
-          <Stack.Screen name="Home" component={HomeScreen} />
+          <>
+            <Stack.Screen
+              name="Home"
+              component={HomeScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="Leaderboard"
+              component={LeaderboardScreen}
+              options={{
+                headerShown: true,
+                title: 'Leaderboard',
+                headerStyle: {
+                  backgroundColor: '#fff',
+                },
+                headerTintColor: '#2c3e50',
+                headerTitleStyle: {
+                  fontWeight: 'bold',
+                },
+              }}
+            />
+          </>
         ) : (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{ headerShown: false }}
+          />
         )}
       </Stack.Navigator>
     </NavigationContainer>
