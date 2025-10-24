@@ -47,5 +47,27 @@ export const groupService = {
             }
             throw error;
         }
+    },
+
+    async joinGroup(joinCode, token) {
+        try {
+            const response = await axios.post(
+                `${API_BASE_URL}/groups/join`,
+                { joinCode: joinCode.toUpperCase() },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            return response.data;
+        } catch (error) {
+            console.error('Error joining group:', error);
+            if (error.response?.data?.error) {
+                throw new Error(error.response.data.error);
+            }
+            throw error;
+        }
     }
 };

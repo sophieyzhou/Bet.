@@ -7,7 +7,7 @@ import * as Linking from 'expo-linking';
 
 import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
-import LeaderboardScreen from './src/screens/LeaderboardScreen';
+import GroupTabsScreen from './src/screens/GroupTabsScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 
 const Stack = createStackNavigator();
@@ -26,11 +26,11 @@ function AppNavigator() {
               options={{ headerShown: false }}
             />
             <Stack.Screen
-              name="Leaderboard"
-              component={LeaderboardScreen}
+              name="GroupTabs"
+              component={GroupTabsScreen}
               options={{
                 headerShown: true,
-                title: 'Leaderboard',
+                title: 'Group',
                 headerStyle: {
                   backgroundColor: '#fff',
                 },

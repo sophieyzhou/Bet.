@@ -23,6 +23,73 @@ const verifyToken = (req, res, next) => {
     }
 };
 
+// POST /api/groups/join - join a group with code
+router.post('/join', verifyToken, async (req, res) => {
+    try {
+        const { joinCode } = req.body;
+        const userId = req.userId;
+
+        // Validation
+        if (!joinCode || joinCode.trim().length !== 6) {
+            return res.status(400).json({ error: 'Please enter a 6-character code' });
+        }
+
+        // Find group by join code
+        const group = await Group.findOne({ joinCode: joinCode.toUpperCase() });
+        if (!group) {
+            return res.status(404).json({ error: 'Invalid join code' });
+        }
+
+        // Check if group is active
+        if (!group.isActive) {
+            return res.status(400).json({ error: 'This group is no longer active' });
+        }
+
+        // Check if user is already a member
+        const isMember = group.members.some(
+            m => m.userId.toString() === userId.toString()
+        );
+        if (isMember) {
+            return res.status(400).json({ error: 'You are already a member of this group' });
+        }
+
+        // Get user details
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Add user to group members
+        group.members.push({
+            userId: user._id,
+            name: user.name,
+            email: user.email,
+            totalPoints: 0
+        });
+        await group.save();
+
+        // Add group to user's joinedGroups
+        if (!user.joinedGroups.includes(group._id)) {
+            user.joinedGroups.push(group._id);
+            await user.save();
+        }
+
+        res.status(200).json({
+            success: true,
+            group: {
+                _id: group._id,
+                name: group.name,
+                description: group.description,
+                memberCount: group.members.length
+            },
+            message: `Successfully joined ${group.name}!`
+        });
+    } catch (error) {
+        console.error('Error joining group:', error);
+        res.status(500).json({ error: 'Failed to join group' });
+    }
+});
+
 // POST /api/groups/create - create a new group
 router.post('/create', verifyToken, async (req, res) => {
     try {
@@ -183,6 +250,9 @@ router.get('/:groupId', verifyToken, async (req, res) => {
         // Sort members by totalPoints (highest to lowest)
         const sortedMembers = [...group.members].sort((a, b) => b.totalPoints - a.totalPoints);
 
+        // Fetch rules for the group
+        const rules = await Rule.find({ groupId: group._id });
+
         res.json({
             success: true,
             group: {
@@ -192,6 +262,7 @@ router.get('/:groupId', verifyToken, async (req, res) => {
                 joinCode: group.joinCode,
                 members: sortedMembers,
                 memberCount: group.members.length,
+                rules: rules,
                 createdAt: group.createdAt,
                 createdBy: group.createdBy
             }

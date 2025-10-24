@@ -65,10 +65,6 @@ export default function LeaderboardScreen({ route, navigation }) {
         }
     };
 
-    const handleSubmitEvent = () => {
-        Alert.alert('Coming Soon!', 'Event submission will be available soon.');
-    };
-
     const getRankDisplay = (rank) => {
         if (rank === 1) return '🥇';
         if (rank === 2) return '🥈';
@@ -157,14 +153,6 @@ export default function LeaderboardScreen({ route, navigation }) {
                     })}
                 </View>
             </ScrollView>
-
-            {/* Submit Event Button */}
-            <TouchableOpacity
-                style={styles.submitButton}
-                onPress={handleSubmitEvent}
-            >
-                <Text style={styles.submitButtonText}>Submit Event</Text>
-            </TouchableOpacity>
         </SafeAreaView>
     );
 }
@@ -287,7 +275,7 @@ const styles = StyleSheet.create({
     leaderboardSection: {
         backgroundColor: '#fff',
         padding: 20,
-        marginBottom: 80,
+        marginBottom: 20,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -343,28 +331,5 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#4285f4',
-    },
-    submitButton: {
-        position: 'absolute',
-        bottom: 20,
-        left: 20,
-        right: 20,
-        backgroundColor: '#4285f4',
-        paddingVertical: 15,
-        borderRadius: 8,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.3,
-        shadowRadius: 4.65,
-        elevation: 8,
-    },
-    submitButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
     },
 });

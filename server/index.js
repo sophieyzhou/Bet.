@@ -7,6 +7,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
 const groupRoutes = require('./routes/groups');
+const eventRoutes = require('./routes/events');
 const { initializePassport } = require('./middleware/auth');
 
 const app = express();
@@ -53,6 +54,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/bet', {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/groups', groupRoutes);
+app.use('/api/events', eventRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

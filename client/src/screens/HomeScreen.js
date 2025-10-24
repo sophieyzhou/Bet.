@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { groupService } from '../services/groupService';
 import CreateGroupModal from '../components/CreateGroupModal';
+import JoinGroupModal from '../components/JoinGroupModal';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
@@ -32,6 +33,7 @@ export default function HomeScreen({ navigation }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
   const createModalRef = useRef(null);
 
   useEffect(() => {
@@ -86,8 +88,35 @@ export default function HomeScreen({ navigation }) {
     fetchGroups(); // Refresh the groups list when modal closes
   };
 
+  const handleJoinSuccess = async (joinCode) => {
+    try {
+      const token = await getItemAsync('authToken');
+      if (token) {
+        const response = await groupService.joinGroup(joinCode, token);
+
+        // Show success message
+        Alert.alert(
+          'Success!',
+          response.message || `Successfully joined ${response.group.name}!`,
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                setShowJoinModal(false);
+                fetchGroups(); // Refresh the groups list
+              }
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Failed to join group');
+      throw error;
+    }
+  };
+
   const handleGroupPress = (group) => {
-    navigation.navigate('Leaderboard', { groupId: group._id });
+    navigation.navigate('GroupTabs', { groupId: group._id });
   };
 
   const handleLogout = () => {
@@ -143,9 +172,14 @@ export default function HomeScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>My Groups</Text>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity onPress={() => setShowJoinModal(true)} style={styles.joinButton}>
+            <Text style={styles.joinButtonText}>Join</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.content}>
@@ -184,6 +218,12 @@ export default function HomeScreen({ navigation }) {
         onClose={handleModalClose}
         onCreateSuccess={handleCreateSuccess}
       />
+
+      <JoinGroupModal
+        visible={showJoinModal}
+        onClose={() => setShowJoinModal(false)}
+        onJoinSuccess={handleJoinSuccess}
+      />
     </SafeAreaView>
   );
 }
@@ -207,6 +247,20 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#2c3e50',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  joinButton: {
+    backgroundColor: '#4285f4',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  joinButtonText: {
+    color: '#fff',
+    fontWeight: '600',
   },
   logoutButton: {
     backgroundColor: '#e74c3c',
