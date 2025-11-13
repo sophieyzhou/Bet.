@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import RuleInput from './RuleInput';
 
-export default function CreateGroupModal({ visible, onClose, onCreateSuccess }) {
+export default function CreateGroupModal({ visible, onClose, onCreateSuccess, editMode = false, initialData = null, onUpdateSuccess = null, groupId = null }) {
     const [groupName, setGroupName] = useState('');
     const [description, setDescription] = useState('');
     const [rules, setRules] = useState([]);
@@ -21,6 +21,26 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess }) 
     const [isLoading, setIsLoading] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [joinCode, setJoinCode] = useState('');
+
+    // Populate form when in edit mode
+    useEffect(() => {
+        if (visible && editMode && initialData) {
+            setGroupName(initialData.name || '');
+            setDescription(initialData.description || '');
+            // Convert rules from server format to form format
+            const formattedRules = (initialData.rules || []).map(rule => ({
+                description: rule.description,
+                points: rule.points,
+                vetoThreshold: rule.vetoThreshold
+            }));
+            setRules(formattedRules);
+        } else if (visible && !editMode) {
+            // Reset form when opening in create mode
+            setGroupName('');
+            setDescription('');
+            setRules([]);
+        }
+    }, [visible, editMode, initialData]);
 
     const handleAddRule = (rule) => {
         if (rules.length >= 20) {
@@ -67,11 +87,19 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess }) 
         setIsLoading(true);
 
         try {
-            const result = await onCreateSuccess(groupData);
-            // Show success modal with join code
-            if (result && result.joinCode) {
-                setJoinCode(result.joinCode);
-                setShowSuccessModal(true);
+            if (editMode && onUpdateSuccess) {
+                // Edit mode: call update handler
+                await onUpdateSuccess(groupId, groupData);
+                // Don't show success modal for edit, just close
+                handleCancel();
+            } else {
+                // Create mode: call create handler
+                const result = await onCreateSuccess(groupData);
+                // Show success modal with join code
+                if (result && result.joinCode) {
+                    setJoinCode(result.joinCode);
+                    setShowSuccessModal(true);
+                }
             }
         } catch (error) {
             // Error handling is done in the parent
@@ -122,7 +150,9 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess }) 
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <ScrollView showsVerticalScrollIndicator={false}>
-                            <Text style={styles.modalTitle}>Create New Group</Text>
+                            <Text style={styles.modalTitle}>
+                                {editMode ? 'Edit Group' : 'Create New Group'}
+                            </Text>
 
                             <Text style={styles.label}>Group Name *</Text>
                             <TextInput
@@ -207,7 +237,9 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess }) 
                                     {isLoading ? (
                                         <ActivityIndicator color="#fff" />
                                     ) : (
-                                        <Text style={styles.createButtonText}>Create Group</Text>
+                                        <Text style={styles.createButtonText}>
+                                            {editMode ? 'Update Group' : 'Create Group'}
+                                        </Text>
                                     )}
                                 </TouchableOpacity>
                             </View>

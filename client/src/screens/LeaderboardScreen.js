@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { groupService } from '../services/groupService';
 import { useAuth } from '../context/AuthContext';
+import CreateGroupModal from '../components/CreateGroupModal';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
@@ -29,6 +30,7 @@ export default function LeaderboardScreen({ route, navigation }) {
     const { user } = useAuth();
     const [group, setGroup] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [showEditModal, setShowEditModal] = useState(false);
 
     useEffect(() => {
         fetchGroupDetails();
@@ -72,6 +74,29 @@ export default function LeaderboardScreen({ route, navigation }) {
         return `#${rank}`;
     };
 
+    const isCreator = group && user && (
+        group.createdBy?.toString() === user.id?.toString() || 
+        group.createdBy?.toString() === user._id?.toString()
+    );
+
+    const handleUpdateSuccess = async (groupId, groupData) => {
+        try {
+            const token = await getItemAsync('authToken');
+            if (token) {
+                await groupService.updateGroup(groupId, token, groupData);
+                Alert.alert('Success', 'Group updated successfully');
+                fetchGroupDetails(); // Refresh group data
+            }
+        } catch (error) {
+            Alert.alert('Error', error.message || 'Failed to update group');
+            throw error;
+        }
+    };
+
+    const handleEditModalClose = () => {
+        setShowEditModal(false);
+    };
+
     if (isLoading) {
         return (
             <SafeAreaView style={styles.container}>
@@ -101,7 +126,17 @@ export default function LeaderboardScreen({ route, navigation }) {
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 {/* Header Section */}
                 <View style={styles.headerCard}>
-                    <Text style={styles.groupName}>{group.name}</Text>
+                    <View style={styles.groupNameRow}>
+                        <Text style={styles.groupName}>{group.name}</Text>
+                        {isCreator && (
+                            <TouchableOpacity
+                                style={styles.editButton}
+                                onPress={() => setShowEditModal(true)}
+                            >
+                                <Text style={styles.editButtonText}>Edit</Text>
+                            </TouchableOpacity>
+                        )}
+                    </View>
                     {group.description && (
                         <Text style={styles.groupDescription}>{group.description}</Text>
                     )}
@@ -153,6 +188,16 @@ export default function LeaderboardScreen({ route, navigation }) {
                     })}
                 </View>
             </ScrollView>
+
+            {/* Edit Group Modal */}
+            <CreateGroupModal
+                visible={showEditModal}
+                onClose={handleEditModalClose}
+                editMode={true}
+                initialData={group}
+                groupId={groupId}
+                onUpdateSuccess={handleUpdateSuccess}
+            />
         </SafeAreaView>
     );
 }
@@ -210,11 +255,29 @@ const styles = StyleSheet.create({
         shadowRadius: 3.84,
         elevation: 5,
     },
+    groupNameRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
     groupName: {
         fontSize: 28,
         fontWeight: 'bold',
         color: '#2c3e50',
-        marginBottom: 8,
+        flex: 1,
+    },
+    editButton: {
+        backgroundColor: '#4285f4',
+        paddingHorizontal: 15,
+        paddingVertical: 8,
+        borderRadius: 6,
+        marginLeft: 10,
+    },
+    editButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
     },
     groupDescription: {
         fontSize: 16,

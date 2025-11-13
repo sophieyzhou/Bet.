@@ -69,5 +69,27 @@ export const groupService = {
             }
             throw error;
         }
+    },
+
+    async updateGroup(groupId, token, groupData) {
+        try {
+            const response = await axios.put(
+                `${API_BASE_URL}/groups/${groupId}`,
+                groupData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            return response.data;
+        } catch (error) {
+            console.error('Error updating group:', error);
+            if (error.response?.data?.error) {
+                throw new Error(error.response.data.error);
+            }
+            throw error;
+        }
     }
 };

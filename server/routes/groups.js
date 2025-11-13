@@ -226,6 +226,102 @@ router.get('/user', verifyToken, async (req, res) => {
     }
 });
 
+// PUT /api/groups/:groupId - update a group
+router.put('/:groupId', verifyToken, async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { name, description, rules } = req.body;
+        const userId = req.userId;
+
+        // Find the group
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ error: 'Group not found' });
+        }
+
+        // Check if user is the creator
+        if (group.createdBy.toString() !== userId.toString()) {
+            return res.status(403).json({ error: 'Only the group creator can edit the group' });
+        }
+
+        // Validation
+        if (!name || name.trim().length < 3 || name.trim().length > 50) {
+            return res.status(400).json({ error: 'Group name must be between 3 and 50 characters' });
+        }
+
+        if (description && description.length > 200) {
+            return res.status(400).json({ error: 'Description must be less than 200 characters' });
+        }
+
+        if (!rules || !Array.isArray(rules) || rules.length < 1) {
+            return res.status(400).json({ error: 'At least one rule is required' });
+        }
+
+        if (rules.length > 20) {
+            return res.status(400).json({ error: 'Maximum 20 rules allowed' });
+        }
+
+        // Validate each rule
+        for (const rule of rules) {
+            if (!rule.description || rule.description.trim().length < 3 || rule.description.trim().length > 100) {
+                return res.status(400).json({ error: 'Rule description must be between 3 and 100 characters' });
+            }
+            if (typeof rule.points !== 'number' || rule.points < -1000 || rule.points > 1000) {
+                return res.status(400).json({ error: 'Rule points must be between -1000 and 1000' });
+            }
+            if (typeof rule.vetoThreshold !== 'number' || rule.vetoThreshold < 0 || rule.vetoThreshold > 100) {
+                return res.status(400).json({ error: 'Veto threshold must be between 0 and 100' });
+            }
+        }
+
+        // Update group name and description
+        group.name = name.trim();
+        group.description = description?.trim() || '';
+        await group.save();
+
+        // Delete old rules
+        await Rule.deleteMany({ groupId: group._id });
+
+        // Create new rules
+        const ruleIds = [];
+        for (const ruleData of rules) {
+            const rule = new Rule({
+                groupId: group._id,
+                description: ruleData.description.trim(),
+                points: ruleData.points,
+                vetoThreshold: ruleData.vetoThreshold
+            });
+            await rule.save();
+            ruleIds.push(rule._id);
+        }
+
+        // Update group with new rule IDs
+        group.rules = ruleIds;
+        await group.save();
+
+        // Fetch updated rules for response
+        const updatedRules = await Rule.find({ groupId: group._id });
+
+        res.json({
+            success: true,
+            group: {
+                _id: group._id,
+                name: group.name,
+                description: group.description,
+                joinCode: group.joinCode,
+                memberCount: group.members.length,
+                rules: updatedRules,
+                createdAt: group.createdAt,
+                createdBy: group.createdBy
+            },
+            message: 'Group updated successfully'
+        });
+    } catch (error) {
+        console.error('Error updating group:', error);
+        res.status(500).json({ error: 'Failed to update group' });
+    }
+});
+
 // GET /api/groups/:groupId - fetch specific group details
 router.get('/:groupId', verifyToken, async (req, res) => {
     try {
