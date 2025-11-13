@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
-    StyleSheet
+    StyleSheet,
+    Modal,
+    Alert
 } from 'react-native';
 
-const EventCard = ({ event, currentUserId, onVoteToVeto }) => {
+const EventCard = ({ event, currentUserId, onVoteToVeto, onDelete }) => {
     const {
         _id,
         userName,
@@ -47,6 +49,41 @@ const EventCard = ({ event, currentUserId, onVoteToVeto }) => {
 
     const formattedCreatedAt = formatDate(createdAt);
     const formattedExpiresAt = formatDate(expiresAt);
+    const [showMenu, setShowMenu] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    const handleDeleteClick = () => {
+        console.log('handleDeleteClick called, eventId:', _id);
+        console.log('onDelete function exists:', !!onDelete);
+        
+        if (!onDelete) {
+            console.error('onDelete function is not available');
+            Alert.alert('Error', 'Delete function not available');
+            return;
+        }
+
+        if (!_id) {
+            console.error('Event ID is missing');
+            Alert.alert('Error', 'Invalid event ID');
+            return;
+        }
+
+        setShowMenu(false);
+        setShowDeleteConfirm(true);
+    };
+
+    const handleDeleteConfirm = () => {
+        console.log('Delete confirmed, calling onDelete with eventId:', _id);
+        setShowDeleteConfirm(false);
+        try {
+            if (onDelete) {
+                onDelete(_id);
+            }
+        } catch (error) {
+            console.error('Error calling onDelete:', error);
+            Alert.alert('Error', 'Failed to initiate delete: ' + error.message);
+        }
+    };
 
     const getStatusColor = () => {
         if (status === 'approved') return '#27ae60';
@@ -72,9 +109,22 @@ const EventCard = ({ event, currentUserId, onVoteToVeto }) => {
                     <Text style={styles.userName}>{userName}</Text>
                     <Text style={styles.ruleDescription}>{rule.description}</Text>
                 </View>
-                <Text style={[styles.points, { color: getPointsColor() }]}>
-                    {rule.points > 0 ? '+' : ''}{rule.points} pts
-                </Text>
+                <View style={styles.headerRight}>
+                    <Text style={[styles.points, { color: getPointsColor() }]}>
+                        {rule.points > 0 ? '+' : ''}{rule.points} pts
+                    </Text>
+                    {isUserSubmitter && (
+                        <TouchableOpacity
+                            style={styles.menuButton}
+                            onPress={() => {
+                                console.log('Menu button pressed, eventId:', _id, 'status:', status);
+                                setShowMenu(true);
+                            }}
+                        >
+                            <Text style={styles.menuButtonText}>⋯</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
 
             {/* Submitted by */}
@@ -95,7 +145,10 @@ const EventCard = ({ event, currentUserId, onVoteToVeto }) => {
             {/* Date Information */}
             <View style={styles.dateRow}>
                 <Text style={styles.dateText}>Created: {formattedCreatedAt}</Text>
-                <Text style={styles.dateText}>Expires: {formattedExpiresAt}</Text>
+                <Text style={styles.dateText}>
+                    {status === 'approved' ? 'Approved: ' : 'Expires: '}
+                    {formattedExpiresAt}
+                </Text>
             </View>
 
             {/* Veto Section - only for pending events */}
@@ -139,6 +192,109 @@ const EventCard = ({ event, currentUserId, onVoteToVeto }) => {
                     )}
                 </View>
             )}
+
+            {/* Menu Modal */}
+            <Modal
+                visible={showMenu}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => {
+                    console.log('Modal onRequestClose called');
+                    setShowMenu(false);
+                }}
+            >
+                <View style={styles.menuOverlay}>
+                    <TouchableOpacity
+                        style={StyleSheet.absoluteFill}
+                        activeOpacity={1}
+                        onPress={() => {
+                            console.log('Overlay pressed, closing menu');
+                            setShowMenu(false);
+                        }}
+                    />
+                    <TouchableOpacity
+                        activeOpacity={1}
+                        onPress={(e) => {
+                            e.stopPropagation();
+                        }}
+                    >
+                        <View style={styles.menuContent}>
+                            <TouchableOpacity
+                                style={styles.menuItem}
+                                onPress={(e) => {
+                                    console.log('Delete menu item pressed');
+                                    e.stopPropagation();
+                                    handleDeleteClick();
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={styles.menuItemTextDelete}>Delete Event</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.menuItem, styles.menuItemLast]}
+                                onPress={(e) => {
+                                    console.log('Cancel menu item pressed');
+                                    e.stopPropagation();
+                                    setShowMenu(false);
+                                }}
+                                activeOpacity={0.7}
+                            >
+                                <Text style={styles.menuItemText}>Cancel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                visible={showDeleteConfirm}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowDeleteConfirm(false)}
+            >
+                <View style={styles.menuOverlay}>
+                    <TouchableOpacity
+                        style={StyleSheet.absoluteFill}
+                        activeOpacity={1}
+                        onPress={() => setShowDeleteConfirm(false)}
+                    />
+                    <TouchableOpacity
+                        activeOpacity={1}
+                        onPress={(e) => e.stopPropagation()}
+                    >
+                        <View style={styles.confirmModalContent}>
+                            <Text style={styles.confirmModalTitle}>Delete Event</Text>
+                            <Text style={styles.confirmModalMessage}>
+                                Are you sure you want to delete this event? This action cannot be undone.
+                            </Text>
+                            <View style={styles.confirmModalButtons}>
+                                <TouchableOpacity
+                                    style={[styles.confirmModalButton, styles.confirmModalButtonCancel]}
+                                    onPress={(e) => {
+                                        e.stopPropagation();
+                                        console.log('Delete cancelled');
+                                        setShowDeleteConfirm(false);
+                                    }}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={styles.confirmModalButtonTextCancel}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.confirmModalButton, styles.confirmModalButtonDelete]}
+                                    onPress={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteConfirm();
+                                    }}
+                                    activeOpacity={0.7}
+                                >
+                                    <Text style={styles.confirmModalButtonTextDelete}>Delete</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -167,6 +323,19 @@ const styles = StyleSheet.create({
     headerLeft: {
         flex: 1,
         marginRight: 10,
+    },
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    menuButton: {
+        padding: 5,
+        marginLeft: 5,
+    },
+    menuButtonText: {
+        fontSize: 24,
+        color: '#7f8c8d',
+        lineHeight: 24,
     },
     userName: {
         fontSize: 18,
@@ -270,6 +439,100 @@ const styles = StyleSheet.create({
         color: '#95a5a6',
         fontSize: 14,
         fontStyle: 'italic',
+    },
+    menuOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'relative',
+    },
+    menuContent: {
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 10,
+        minWidth: 200,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    menuItem: {
+        paddingVertical: 12,
+        paddingHorizontal: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e1e8ed',
+    },
+    menuItemLast: {
+        borderBottomWidth: 0,
+    },
+    menuItemText: {
+        fontSize: 16,
+        color: '#2c3e50',
+    },
+    menuItemTextDelete: {
+        fontSize: 16,
+        color: '#e74c3c',
+        fontWeight: '600',
+    },
+    confirmModalContent: {
+        backgroundColor: '#fff',
+        borderRadius: 15,
+        padding: 20,
+        minWidth: 300,
+        maxWidth: '90%',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    confirmModalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#2c3e50',
+        marginBottom: 10,
+    },
+    confirmModalMessage: {
+        fontSize: 16,
+        color: '#7f8c8d',
+        marginBottom: 20,
+        lineHeight: 22,
+    },
+    confirmModalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+    },
+    confirmModalButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        minWidth: 80,
+        alignItems: 'center',
+    },
+    confirmModalButtonCancel: {
+        backgroundColor: '#e1e8ed',
+        marginRight: 10,
+    },
+    confirmModalButtonDelete: {
+        backgroundColor: '#e74c3c',
+    },
+    confirmModalButtonTextCancel: {
+        color: '#2c3e50',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    confirmModalButtonTextDelete: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
 

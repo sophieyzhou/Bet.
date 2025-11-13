@@ -86,6 +86,47 @@ export default function EventsScreen({ route }) {
         }
     };
 
+    const handleDeleteEvent = async (eventId) => {
+        console.log('=== handleDeleteEvent called ===');
+        console.log('EventId:', eventId);
+        console.log('EventId type:', typeof eventId);
+        
+        try {
+            if (!eventId) {
+                console.error('No eventId provided');
+                Alert.alert('Error', 'Invalid event ID');
+                return;
+            }
+
+            console.log('Getting auth token...');
+            const token = await getItemAsync('authToken');
+            if (!token) {
+                console.error('No auth token found');
+                Alert.alert('Error', 'Authentication required. Please log in again.');
+                return;
+            }
+            console.log('Auth token retrieved');
+
+            console.log('Calling eventService.deleteEvent with eventId:', eventId);
+            const result = await eventService.deleteEvent(eventId, token);
+            console.log('Delete result:', result);
+            console.log('Delete successful!');
+            
+            Alert.alert('Success', 'Event deleted successfully');
+            console.log('Refreshing events list...');
+            fetchEvents(); // Refresh to remove deleted event
+        } catch (error) {
+            console.error('=== DELETE EVENT ERROR ===');
+            console.error('Error object:', error);
+            console.error('Error message:', error?.message);
+            console.error('Error stack:', error?.stack);
+            console.error('Error response:', error?.response);
+            const errorMessage = error?.message || error?.toString() || 'Failed to delete event';
+            console.error('Showing error alert:', errorMessage);
+            Alert.alert('Error', errorMessage);
+        }
+    };
+
     const handleSubmitEvent = async (eventData) => {
         try {
             const token = await getItemAsync('authToken');
@@ -154,6 +195,7 @@ export default function EventsScreen({ route }) {
                         event={item}
                         currentUserId={user?.id}
                         onVoteToVeto={handleVoteToVeto}
+                        onDelete={handleDeleteEvent}
                     />
                 )}
                 keyExtractor={(item) => item._id}

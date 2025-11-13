@@ -299,4 +299,95 @@ router.post('/:eventId/vote', verifyToken, async (req, res) => {
     }
 });
 
+// DELETE /api/events/:eventId - delete an event
+router.delete('/:eventId', verifyToken, async (req, res) => {
+    console.log('=== DELETE EVENT REQUEST ===');
+    console.log('EventId from params:', req.params.eventId);
+    console.log('UserId from token:', req.userId);
+    
+    try {
+        const { eventId } = req.params;
+        const userId = req.userId;
+
+        if (!eventId) {
+            console.error('Event ID is missing');
+            return res.status(400).json({ error: 'Event ID is required' });
+        }
+
+        console.log('Looking up event:', eventId);
+        const event = await Event.findById(eventId);
+        if (!event) {
+            console.error('Event not found:', eventId);
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        console.log('Event found:', {
+            _id: event._id,
+            status: event.status,
+            submittedBy: event.submittedBy,
+            userId: event.userId
+        });
+
+        // Check if user created the event
+        if (event.submittedBy.toString() !== userId.toString()) {
+            console.error('User is not the creator. UserId:', userId, 'SubmittedBy:', event.submittedBy);
+            return res.status(403).json({ error: 'You can only delete events you created' });
+        }
+        
+        console.log('User is authorized to delete this event');
+
+        // Remove points for pending and approved events (vetoed events already had points removed)
+        if (event.status === 'pending' || event.status === 'approved') {
+            try {
+                const group = await Group.findById(event.groupId);
+                if (!group) {
+                    console.error('Group not found for event deletion:', event.groupId);
+                    // Continue with deletion even if group not found
+                } else {
+                    const rule = await Rule.findById(event.ruleId);
+                    if (!rule) {
+                        console.error('Rule not found for event deletion:', event.ruleId);
+                        // Continue with deletion even if rule not found
+                    } else {
+                        const memberIndex = group.members.findIndex(
+                            m => m.userId.toString() === event.userId.toString()
+                        );
+
+                        if (memberIndex !== -1) {
+                            group.members[memberIndex].totalPoints -= rule.points;
+                            await group.save();
+                            console.log(`Removed ${rule.points} points from user ${event.userId} for deleted event`);
+                        } else {
+                            console.error('Member not found in group for event deletion');
+                        }
+                    }
+                }
+            } catch (pointsError) {
+                console.error('Error removing points during event deletion:', pointsError);
+                // Continue with deletion even if points removal fails
+            }
+        }
+
+        // Delete the event
+        console.log('Deleting event from database...');
+        const deletedEvent = await Event.findByIdAndDelete(eventId);
+        if (!deletedEvent) {
+            console.error('Event was not deleted (may have been already deleted)');
+            return res.status(404).json({ error: 'Event not found or already deleted' });
+        }
+
+        console.log('Event successfully deleted:', deletedEvent._id);
+        res.json({
+            success: true,
+            message: 'Event deleted successfully'
+        });
+    } catch (error) {
+        console.error('=== ERROR DELETING EVENT ===');
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        const errorMessage = error.message || 'Failed to delete event';
+        res.status(500).json({ error: errorMessage });
+    }
+});
+
 module.exports = router;
