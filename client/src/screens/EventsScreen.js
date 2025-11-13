@@ -270,8 +270,11 @@ const styles = StyleSheet.create({
         elevation: 8,
     },
     fabText: {
-        fontSize: 24,
+        fontSize: 28,
         color: '#fff',
         fontWeight: 'bold',
+        textAlign: 'center',
+        lineHeight: 28,
+        includeFontPadding: false,
     },
 });

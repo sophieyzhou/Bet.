@@ -34,23 +34,10 @@ async function autoResolveExpiredEvents(groupId) {
 
         for (const event of expiredEvents) {
             // Auto-approve the event
+            // Points were already added when event was created with pending status,
+            // so we just need to change the status to approved
             event.status = 'approved';
             await event.save();
-
-            // Update user's total points in group
-            const group = await Group.findById(groupId);
-            const rule = await Rule.findById(event.ruleId);
-
-            if (group && rule) {
-                const memberIndex = group.members.findIndex(
-                    m => m.userId.toString() === event.userId.toString()
-                );
-
-                if (memberIndex !== -1) {
-                    group.members[memberIndex].totalPoints += rule.points;
-                    await group.save();
-                }
-            }
         }
     } catch (error) {
         console.error('Error auto-resolving expired events:', error);
@@ -110,6 +97,16 @@ router.post('/create', verifyToken, async (req, res) => {
         });
 
         await event.save();
+
+        // Add points immediately when event is created with pending status
+        const memberIndex = group.members.findIndex(
+            m => m.userId.toString() === userId.toString()
+        );
+
+        if (memberIndex !== -1) {
+            group.members[memberIndex].totalPoints += rule.points;
+            await group.save();
+        }
 
         res.status(201).json({
             success: true,
@@ -239,9 +236,14 @@ router.post('/:eventId/vote', verifyToken, async (req, res) => {
             return res.status(403).json({ error: 'Access denied' });
         }
 
-        // Check if user is trying to vote on their own event
+        // Cannot vote if the event is applied to the user
         if (event.userId.toString() === userId.toString()) {
             return res.status(400).json({ error: 'You cannot vote on your own event' });
+        }
+
+        // Cannot vote if you created the event (you can only veto events you didn't create)
+        if (event.submittedBy.toString() === userId.toString()) {
+            return res.status(400).json({ error: 'You cannot vote on events you created' });
         }
 
         // Check if user has already voted
@@ -262,8 +264,22 @@ router.post('/:eventId/vote', verifyToken, async (req, res) => {
         const rule = await Rule.findById(event.ruleId);
         const vetoCount = event.votes.filter(v => v.vote === false).length;
 
+        const wasPending = event.status === 'pending';
         if (vetoCount >= rule.vetoThreshold) {
             event.status = 'vetoed';
+            
+            // Remove points that were added when event was created (if it was pending)
+            if (wasPending) {
+                const group = await Group.findById(event.groupId);
+                const memberIndex = group.members.findIndex(
+                    m => m.userId.toString() === event.userId.toString()
+                );
+
+                if (memberIndex !== -1) {
+                    group.members[memberIndex].totalPoints -= rule.points;
+                    await group.save();
+                }
+            }
         }
 
         await event.save();

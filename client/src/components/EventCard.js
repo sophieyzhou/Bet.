@@ -18,29 +18,35 @@ const EventCard = ({ event, currentUserId, onVoteToVeto }) => {
         createdAt,
         expiresAt,
         userId,
+        submittedBy,
         votes
     } = event;
 
     const hasUserVoted = votes.some(v => v.userId === currentUserId);
     const isOwnEvent = userId === currentUserId;
+    const isUserSubmitter = submittedBy === currentUserId;
+    // Can only veto events you didn't create and that are not applied to you
+    const canVeto = !isOwnEvent && !isUserSubmitter;
     const isPending = status === 'pending';
 
-    // Calculate time remaining for pending events
-    const getTimeRemaining = () => {
-        const now = new Date();
-        const expires = new Date(expiresAt);
-        const diff = expires - now;
-
-        if (diff <= 0) return 'Expired';
-
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-        if (hours > 0) {
-            return `${hours}h ${minutes}m remaining`;
-        }
-        return `${minutes}m remaining`;
+    // Format date nicely (UTC to local time)
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Invalid date';
+        const options = {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        };
+        return date.toLocaleString('en-US', options);
     };
+
+    const formattedCreatedAt = formatDate(createdAt);
+    const formattedExpiresAt = formatDate(expiresAt);
 
     const getStatusColor = () => {
         if (status === 'approved') return '#27ae60';
@@ -84,9 +90,12 @@ const EventCard = ({ event, currentUserId, onVoteToVeto }) => {
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
                     <Text style={styles.statusText}>{getStatusText()}</Text>
                 </View>
-                {isPending && (
-                    <Text style={styles.timeRemaining}>{getTimeRemaining()}</Text>
-                )}
+            </View>
+
+            {/* Date Information */}
+            <View style={styles.dateRow}>
+                <Text style={styles.dateText}>Created: {formattedCreatedAt}</Text>
+                <Text style={styles.dateText}>Expires: {formattedExpiresAt}</Text>
             </View>
 
             {/* Veto Section - only for pending events */}
@@ -106,7 +115,7 @@ const EventCard = ({ event, currentUserId, onVoteToVeto }) => {
                         </View>
                     </View>
 
-                    {!isOwnEvent && !hasUserVoted && (
+                    {canVeto && !hasUserVoted && (
                         <TouchableOpacity
                             style={styles.vetoButton}
                             onPress={() => onVoteToVeto(_id)}
@@ -123,6 +132,10 @@ const EventCard = ({ event, currentUserId, onVoteToVeto }) => {
 
                     {isOwnEvent && (
                         <Text style={styles.cannotVoteText}>Your event</Text>
+                    )}
+
+                    {isUserSubmitter && !isOwnEvent && !hasUserVoted && (
+                        <Text style={styles.cannotVoteText}>You created this event</Text>
                     )}
                 </View>
             )}
@@ -183,7 +196,7 @@ const styles = StyleSheet.create({
     statusRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
         marginBottom: 10,
     },
     statusBadge: {
@@ -196,9 +209,13 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
     },
-    timeRemaining: {
+    dateRow: {
+        marginBottom: 10,
+    },
+    dateText: {
         fontSize: 12,
         color: '#7f8c8d',
+        marginBottom: 4,
     },
     vetoSection: {
         marginTop: 10,
