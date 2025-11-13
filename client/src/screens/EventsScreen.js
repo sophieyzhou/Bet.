@@ -26,7 +26,7 @@ const getItemAsync = async (key) => {
     }
 };
 
-export default function EventsScreen({ route }) {
+export default function EventsScreen({ route, onGroupDataRefresh }) {
     const { groupId, groupData } = route.params;
     const { user } = useAuth();
     const [events, setEvents] = useState([]);
@@ -80,6 +80,10 @@ export default function EventsScreen({ route }) {
                 await eventService.voteToVeto(eventId, token);
                 Alert.alert('Success', 'Your veto vote has been recorded');
                 fetchEvents(); // Refresh to show updated vote
+                // Refresh group data to update points if event was vetoed
+                if (onGroupDataRefresh) {
+                    onGroupDataRefresh();
+                }
             }
         } catch (error) {
             Alert.alert('Error', error.message || 'Failed to vote');
@@ -115,6 +119,10 @@ export default function EventsScreen({ route }) {
             Alert.alert('Success', 'Event deleted successfully');
             console.log('Refreshing events list...');
             fetchEvents(); // Refresh to remove deleted event
+            // Refresh group data to update points
+            if (onGroupDataRefresh) {
+                onGroupDataRefresh();
+            }
         } catch (error) {
             console.error('=== DELETE EVENT ERROR ===');
             console.error('Error object:', error);
@@ -134,6 +142,10 @@ export default function EventsScreen({ route }) {
                 await eventService.createEvent(groupId, eventData, token);
                 Alert.alert('Success', 'Event submitted successfully');
                 fetchEvents(); // Refresh to show new event
+                // Refresh group data to update points
+                if (onGroupDataRefresh) {
+                    onGroupDataRefresh();
+                }
             }
         } catch (error) {
             Alert.alert('Error', error.message || 'Failed to submit event');

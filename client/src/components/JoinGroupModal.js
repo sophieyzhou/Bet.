@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -6,23 +6,26 @@ import {
     TouchableOpacity,
     StyleSheet,
     Modal,
-    Alert,
     ActivityIndicator
 } from 'react-native';
 
 export default function JoinGroupModal({ visible, onClose, onJoinSuccess }) {
     const [joinCode, setJoinCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     const handleJoin = async () => {
+        // Clear any previous errors
+        setErrorMessage('');
+        
         // Validation
         if (!joinCode.trim()) {
-            Alert.alert('Error', 'Please enter a join code');
+            setErrorMessage('Please enter a join code');
             return;
         }
 
         if (joinCode.trim().length !== 6) {
-            Alert.alert('Error', 'Join code must be 6 characters');
+            setErrorMessage('Join code must be 6 characters');
             return;
         }
 
@@ -30,10 +33,13 @@ export default function JoinGroupModal({ visible, onClose, onJoinSuccess }) {
 
         try {
             await onJoinSuccess(joinCode.trim().toUpperCase());
-            // Reset form
+            // Success - reset form and close modal (handled by parent)
             setJoinCode('');
+            setErrorMessage('');
         } catch (error) {
-            // Error handled in parent
+            // Display error in modal - keep modal open
+            const errorMsg = error.message || 'Failed to join group. Please try again.';
+            setErrorMessage(errorMsg);
         } finally {
             setIsLoading(false);
         }
@@ -41,13 +47,26 @@ export default function JoinGroupModal({ visible, onClose, onJoinSuccess }) {
 
     const handleCancel = () => {
         setJoinCode('');
+        setErrorMessage('');
         onClose();
     };
 
     const handleCodeChange = (text) => {
         // Auto-uppercase and limit to 6 characters
         setJoinCode(text.toUpperCase().slice(0, 6));
+        // Clear error when user starts typing
+        if (errorMessage) {
+            setErrorMessage('');
+        }
     };
+
+    // Clear error when modal closes/opens
+    useEffect(() => {
+        if (!visible) {
+            setErrorMessage('');
+            setJoinCode('');
+        }
+    }, [visible]);
 
     return (
         <Modal
@@ -63,8 +82,9 @@ export default function JoinGroupModal({ visible, onClose, onJoinSuccess }) {
                     <Text style={styles.helperText}>Enter the 6-digit group code</Text>
 
                     <TextInput
-                        style={styles.input}
-                        placeholder="ABC123"
+                        style={[styles.input, joinCode.length > 0 && joinCode.length !== 6 && styles.inputError]}
+                        placeholder="Enter code"
+                        placeholderTextColor="#bdc3c7"
                         value={joinCode}
                         onChangeText={handleCodeChange}
                         autoCapitalize="characters"
@@ -72,6 +92,14 @@ export default function JoinGroupModal({ visible, onClose, onJoinSuccess }) {
                         editable={!isLoading}
                         autoFocus
                     />
+                    {joinCode.length > 0 && joinCode.length !== 6 && (
+                        <Text style={styles.errorText}>Code must be exactly 6 characters</Text>
+                    )}
+                    {errorMessage && (
+                        <View style={styles.errorContainer}>
+                            <Text style={styles.errorMessageText}>{errorMessage}</Text>
+                        </View>
+                    )}
 
                     <View style={styles.buttonRow}>
                         <TouchableOpacity
@@ -81,17 +109,17 @@ export default function JoinGroupModal({ visible, onClose, onJoinSuccess }) {
                         >
                             <Text style={styles.cancelButtonText}>Cancel</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.joinButton, isLoading && styles.disabledButton]}
-                            onPress={handleJoin}
-                            disabled={isLoading}
-                        >
-                            {isLoading ? (
-                                <ActivityIndicator color="#fff" />
-                            ) : (
-                                <Text style={styles.joinButtonText}>Join</Text>
-                            )}
-                        </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.joinButton, (isLoading || joinCode.length !== 6) && styles.disabledButton]}
+                        onPress={handleJoin}
+                        disabled={isLoading || joinCode.length !== 6}
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <Text style={styles.joinButtonText}>Join</Text>
+                        )}
+                    </TouchableOpacity>
                     </View>
                 </View>
             </View>
@@ -144,7 +172,6 @@ const styles = StyleSheet.create({
     buttonRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        gap: 10,
     },
     cancelButton: {
         flex: 1,
@@ -152,6 +179,7 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
         borderRadius: 8,
         alignItems: 'center',
+        marginRight: 10,
     },
     cancelButtonText: {
         color: '#7f8c8d',
@@ -172,5 +200,29 @@ const styles = StyleSheet.create({
     },
     disabledButton: {
         opacity: 0.6,
+    },
+    inputError: {
+        borderColor: '#e74c3c',
+    },
+    errorText: {
+        color: '#e74c3c',
+        fontSize: 12,
+        marginTop: -15,
+        marginBottom: 10,
+        textAlign: 'center',
+    },
+    errorContainer: {
+        backgroundColor: '#fee',
+        borderWidth: 1,
+        borderColor: '#e74c3c',
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 15,
+    },
+    errorMessageText: {
+        color: '#e74c3c',
+        fontSize: 14,
+        textAlign: 'center',
+        fontWeight: '500',
     },
 });

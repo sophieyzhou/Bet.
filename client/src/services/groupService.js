@@ -64,10 +64,22 @@ export const groupService = {
             return response.data;
         } catch (error) {
             console.error('Error joining group:', error);
-            if (error.response?.data?.error) {
-                throw new Error(error.response.data.error);
+            // Extract error message from response
+            if (error.response) {
+                // Server responded with error status
+                const errorMessage = error.response.data?.error || 
+                                    error.response.data?.message || 
+                                    `Failed to join group (${error.response.status})`;
+                const customError = new Error(errorMessage);
+                customError.response = error.response;
+                throw customError;
+            } else if (error.request) {
+                // Request made but no response received
+                throw new Error('Network error: Could not reach server. Please check your connection.');
+            } else {
+                // Error setting up request
+                throw new Error(error.message || 'Failed to join group');
             }
-            throw error;
         }
     },
 

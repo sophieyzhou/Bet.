@@ -18,6 +18,7 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
     const [description, setDescription] = useState('');
     const [rules, setRules] = useState([]);
     const [showRuleInput, setShowRuleInput] = useState(false);
+    const [editingRuleIndex, setEditingRuleIndex] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [joinCode, setJoinCode] = useState('');
@@ -40,20 +41,42 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
             setDescription('');
             setRules([]);
         }
+        // Reset editing state when modal opens/closes
+        setEditingRuleIndex(null);
+        setShowRuleInput(false);
     }, [visible, editMode, initialData]);
 
     const handleAddRule = (rule) => {
-        if (rules.length >= 20) {
-            Alert.alert('Maximum Reached', 'You can only add up to 20 rules');
-            return;
+        if (editingRuleIndex !== null) {
+            // Editing existing rule
+            const newRules = [...rules];
+            newRules[editingRuleIndex] = rule;
+            setRules(newRules);
+            setEditingRuleIndex(null);
+        } else {
+            // Adding new rule
+            if (rules.length >= 20) {
+                Alert.alert('Maximum Reached', 'You can only add up to 20 rules');
+                return;
+            }
+            setRules([...rules, rule]);
         }
-        setRules([...rules, rule]);
         setShowRuleInput(false);
+    };
+
+    const handleEditRule = (index) => {
+        setEditingRuleIndex(index);
+        setShowRuleInput(true);
     };
 
     const handleRemoveRule = (index) => {
         const newRules = rules.filter((_, i) => i !== index);
         setRules(newRules);
+    };
+
+    const handleCancelRuleInput = () => {
+        setShowRuleInput(false);
+        setEditingRuleIndex(null);
     };
 
     const handleCreate = async () => {
@@ -195,20 +218,30 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
                                                 </Text>
                                             </View>
                                         </View>
-                                        <TouchableOpacity
-                                            onPress={() => handleRemoveRule(index)}
-                                            style={styles.removeButton}
-                                            disabled={isLoading}
-                                        >
-                                            <Text style={styles.removeButtonText}>×</Text>
-                                        </TouchableOpacity>
+                                        <View style={styles.ruleActions}>
+                                            <TouchableOpacity
+                                                onPress={() => handleEditRule(index)}
+                                                style={styles.editButton}
+                                                disabled={isLoading}
+                                            >
+                                                <Text style={styles.editButtonText}>Edit</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                onPress={() => handleRemoveRule(index)}
+                                                style={styles.removeButton}
+                                                disabled={isLoading}
+                                            >
+                                                <Text style={styles.removeButtonText}>×</Text>
+                                            </TouchableOpacity>
+                                        </View>
                                     </View>
                                 ))}
 
                                 {showRuleInput ? (
                                     <RuleInput
                                         onAddRule={handleAddRule}
-                                        onCancel={() => setShowRuleInput(false)}
+                                        onCancel={handleCancelRuleInput}
+                                        initialRule={editingRuleIndex !== null ? rules[editingRuleIndex] : null}
                                     />
                                 ) : (
                                     <TouchableOpacity
@@ -367,6 +400,22 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#7f8c8d',
     },
+    ruleActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    editButton: {
+        backgroundColor: '#4285f4',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 6,
+    },
+    editButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
+    },
     removeButton: {
         width: 30,
         height: 30,
@@ -374,7 +423,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#e74c3c',
         justifyContent: 'center',
         alignItems: 'center',
-        marginLeft: 10,
     },
     removeButtonText: {
         color: '#fff',

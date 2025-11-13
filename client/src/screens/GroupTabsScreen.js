@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { groupService } from '../services/groupService';
 import LeaderboardScreen from './LeaderboardScreen';
@@ -45,6 +45,21 @@ export default function GroupTabsScreen({ route, navigation }) {
         }
     };
 
+    const refreshGroupData = useCallback(async () => {
+        try {
+            const token = await getItemAsync('authToken');
+            if (token) {
+                const response = await groupService.getGroupDetails(groupId, token);
+                setGroupData(response.group);
+                navigation.setOptions({
+                    title: response.group.name
+                });
+            }
+        } catch (error) {
+            console.error('Error refreshing group data:', error);
+        }
+    }, [groupId, navigation]);
+
     if (isLoading) {
         return (
             <View style={styles.loadingContainer}>
@@ -84,7 +99,7 @@ export default function GroupTabsScreen({ route, navigation }) {
                     tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>📋</Text>
                 }}
             >
-                {(props) => <EventsScreen {...props} route={{ params: { groupId, groupData } }} />}
+                {(props) => <EventsScreen {...props} route={{ params: { groupId, groupData } }} onGroupDataRefresh={refreshGroupData} />}
             </Tab.Screen>
         </Tab.Navigator>
     );

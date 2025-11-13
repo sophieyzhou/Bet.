@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     Text,
@@ -7,14 +7,15 @@ import {
     SafeAreaView,
     ActivityIndicator,
     ScrollView,
-    Alert,
-    Clipboard
+    Alert
 } from 'react-native';
 import { groupService } from '../services/groupService';
 import { useAuth } from '../context/AuthContext';
 import CreateGroupModal from '../components/CreateGroupModal';
+import ShareGroupModal from '../components/ShareGroupModal';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Helper functions for cross-platform storage
 const getItemAsync = async (key) => {
@@ -26,15 +27,35 @@ const getItemAsync = async (key) => {
 };
 
 export default function LeaderboardScreen({ route, navigation }) {
-    const { groupId } = route.params;
+    const { groupId, groupData: initialGroupData } = route.params;
     const { user } = useAuth();
-    const [group, setGroup] = useState(null);
+    const [group, setGroup] = useState(initialGroupData || null);
     const [isLoading, setIsLoading] = useState(true);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
 
     useEffect(() => {
-        fetchGroupDetails();
+        if (initialGroupData) {
+            setGroup(initialGroupData);
+            setIsLoading(false);
+        } else {
+            fetchGroupDetails();
+        }
     }, [groupId]);
+
+    // Update group when initialGroupData changes (from parent refresh)
+    useEffect(() => {
+        if (initialGroupData) {
+            setGroup(initialGroupData);
+        }
+    }, [initialGroupData]);
+
+    // Auto-refresh when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            fetchGroupDetails();
+        }, [groupId])
+    );
 
     const fetchGroupDetails = async () => {
         try {
@@ -60,11 +81,8 @@ export default function LeaderboardScreen({ route, navigation }) {
         }
     };
 
-    const handleCopyJoinCode = () => {
-        if (group?.joinCode) {
-            Clipboard.setString(group.joinCode);
-            Alert.alert('Copied!', 'Join code copied to clipboard');
-        }
+    const handleShareGroup = () => {
+        setShowShareModal(true);
     };
 
     const getRankDisplay = (rank) => {
@@ -145,19 +163,14 @@ export default function LeaderboardScreen({ route, navigation }) {
                         <Text style={styles.memberCount}>{group.memberCount} members</Text>
                     </View>
 
-                    {/* Join Code Section */}
-                    <View style={styles.joinCodeSection}>
-                        <Text style={styles.joinCodeLabel}>Join Code</Text>
-                        <View style={styles.joinCodeContainer}>
-                            <Text style={styles.joinCodeText}>{group.joinCode}</Text>
-                            <TouchableOpacity
-                                style={styles.copyButton}
-                                onPress={handleCopyJoinCode}
-                            >
-                                <Text style={styles.copyButtonText}>Copy</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
+                    {/* Share Group Button */}
+                    <TouchableOpacity
+                        style={styles.shareButton}
+                        onPress={handleShareGroup}
+                        activeOpacity={0.7}
+                    >
+                        <Text style={styles.shareButtonText}>Share Group</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Leaderboard Section */}
@@ -197,6 +210,13 @@ export default function LeaderboardScreen({ route, navigation }) {
                 initialData={group}
                 groupId={groupId}
                 onUpdateSuccess={handleUpdateSuccess}
+            />
+
+            {/* Share Group Modal */}
+            <ShareGroupModal
+                visible={showShareModal}
+                onClose={() => setShowShareModal(false)}
+                joinCode={group?.joinCode}
             />
         </SafeAreaView>
     );
@@ -297,42 +317,16 @@ const styles = StyleSheet.create({
         paddingVertical: 5,
         borderRadius: 12,
     },
-    joinCodeSection: {
-        marginTop: 10,
-        paddingTop: 15,
-        borderTopWidth: 1,
-        borderTopColor: '#e1e8ed',
-    },
-    joinCodeLabel: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#7f8c8d',
-        marginBottom: 8,
-    },
-    joinCodeContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#f8f9fa',
-        padding: 12,
-        borderRadius: 8,
-    },
-    joinCodeText: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#4285f4',
-        fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-        letterSpacing: 3,
-    },
-    copyButton: {
+    shareButton: {
+        marginTop: 15,
         backgroundColor: '#4285f4',
-        paddingHorizontal: 15,
-        paddingVertical: 8,
-        borderRadius: 6,
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
     },
-    copyButtonText: {
+    shareButtonText: {
         color: '#fff',
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: '600',
     },
     leaderboardSection: {

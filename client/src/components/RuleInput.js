@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -8,10 +8,24 @@ import {
     Alert
 } from 'react-native';
 
-export default function RuleInput({ onAddRule, onCancel }) {
+export default function RuleInput({ onAddRule, onCancel, initialRule = null }) {
     const [description, setDescription] = useState('');
     const [points, setPoints] = useState('');
     const [vetoThreshold, setVetoThreshold] = useState('0');
+
+    // Populate form when editing an existing rule
+    useEffect(() => {
+        if (initialRule) {
+            setDescription(initialRule.description || '');
+            setPoints(initialRule.points?.toString() || '');
+            setVetoThreshold(initialRule.vetoThreshold?.toString() || '0');
+        } else {
+            // Reset form when not editing
+            setDescription('');
+            setPoints('');
+            setVetoThreshold('0');
+        }
+    }, [initialRule]);
 
     const handleAdd = () => {
         // Validation
@@ -51,10 +65,12 @@ export default function RuleInput({ onAddRule, onCancel }) {
 
         onAddRule(rule);
 
-        // Reset form
-        setDescription('');
-        setPoints('');
-        setVetoThreshold('0');
+        // Reset form only if not editing (editing state is managed by parent)
+        if (!initialRule) {
+            setDescription('');
+            setPoints('');
+            setVetoThreshold('0');
+        }
     };
 
     return (
@@ -93,7 +109,9 @@ export default function RuleInput({ onAddRule, onCancel }) {
                     <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-                    <Text style={styles.addButtonText}>Add Rule</Text>
+                    <Text style={styles.addButtonText}>
+                        {initialRule ? 'Update Rule' : 'Add Rule'}
+                    </Text>
                 </TouchableOpacity>
             </View>
         </View>

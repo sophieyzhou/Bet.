@@ -94,23 +94,18 @@ export default function HomeScreen({ navigation }) {
       if (token) {
         const response = await groupService.joinGroup(joinCode, token);
 
-        // Show success message
-        Alert.alert(
-          'Success!',
-          response.message || `Successfully joined ${response.group.name}!`,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                setShowJoinModal(false);
-                fetchGroups(); // Refresh the groups list
-              }
-            }
-          ]
-        );
+        // Close modal immediately on success
+        setShowJoinModal(false);
+        
+        // Refresh groups list
+        fetchGroups();
+        
+        // Show simple success notification
+        Alert.alert('Success!', 'Game joined successfully!');
       }
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to join group');
+      // Error message is already extracted and formatted by groupService
+      // Re-throw error so modal can display it and stay open
       throw error;
     }
   };
