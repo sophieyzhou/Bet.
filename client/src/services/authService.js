@@ -32,6 +32,41 @@ export const authService = {
     }
   },
 
+  async loginWithEmail(email, password) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+        email,
+        password
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Email login error:', error);
+      // Pass through the error response data if available
+      if (error.response?.data) {
+        throw error.response.data;
+      }
+      throw error;
+    }
+  },
+
+  async signupWithEmail(name, email, password) {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/signup`, {
+        name,
+        email,
+        password
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Signup error:', error);
+      // Pass through the error response data if available
+      if (error.response?.data) {
+        throw error.response.data;
+      }
+      throw error;
+    }
+  },
+
   async verifyToken(token) {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/verify`, {

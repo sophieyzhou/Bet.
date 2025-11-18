@@ -15,8 +15,33 @@ router.post('/signup', async (req, res) => {
     }
 
     const existing = await User.findOne({ email });
+    
+    // If user exists with Google auth only (no password), add password to their account (auto-link)
+    if (existing && existing.googleId && !existing.passwordHash) {
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(password, salt);
+      
+      existing.passwordHash = passwordHash;
+      existing.provider = 'both'; // Update provider to indicate both auth methods
+      await existing.save();
+
+      const token = jwt.sign(
+        { userId: existing._id, email: existing.email },
+        process.env.JWT_SECRET || 'your-jwt-secret',
+        { expiresIn: '7d' }
+      );
+
+      return res.status(200).json({
+        success: true,
+        token,
+        message: 'Password added to your Google account',
+        user: { id: existing._id, email: existing.email, name: existing.name, profilePicture: existing.profilePicture }
+      });
+    }
+    
+    // If user exists with password already, return error
     if (existing) {
-      return res.status(409).json({ error: 'Email already in use' });
+      return res.status(409).json({ error: 'Email already registered' });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -55,8 +80,16 @@ router.post('/login', async (req, res) => {
     }
 
     const user = await User.findOne({ email });
-    if (!user || !user.passwordHash) {
+    if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check if user exists but has no password (Google-only account)
+    if (!user.passwordHash) {
+      return res.status(401).json({ 
+        error: 'This account uses Google sign-in',
+        errorCode: 'GOOGLE_ACCOUNT'
+      });
     }
 
     const match = await bcrypt.compare(password, user.passwordHash);
