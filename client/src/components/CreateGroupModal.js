@@ -22,6 +22,7 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
     const [isLoading, setIsLoading] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
     const [joinCode, setJoinCode] = useState('');
+    const [rulesError, setRulesError] = useState(null);
 
     // Populate form when in edit mode
     useEffect(() => {
@@ -40,10 +41,12 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
             setGroupName('');
             setDescription('');
             setRules([]);
+            setRulesError(null);
         }
         // Reset editing state when modal opens/closes
         setEditingRuleIndex(null);
         setShowRuleInput(false);
+        setRulesError(null);
     }, [visible, editMode, initialData]);
 
     const handleAddRule = (rule) => {
@@ -62,11 +65,13 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
             setRules([...rules, rule]);
         }
         setShowRuleInput(false);
+        setRulesError(null);
     };
 
     const handleEditRule = (index) => {
         setEditingRuleIndex(index);
         setShowRuleInput(true);
+        setRulesError(null);
     };
 
     const handleRemoveRule = (index) => {
@@ -97,6 +102,7 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
         }
 
         if (rules.length === 0) {
+            setRulesError('At least one rule is required');
             Alert.alert('Error', 'At least one rule is required');
             return;
         }
@@ -144,6 +150,7 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
         setDescription('');
         setRules([]);
         setShowRuleInput(false);
+        setRulesError(null);
         // Call onClose to trigger refresh in parent
         onClose();
     };
@@ -159,6 +166,7 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
         setDescription('');
         setRules([]);
         setShowRuleInput(false);
+        setRulesError(null);
         onClose();
     };
 
@@ -246,11 +254,18 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
                                 ) : (
                                     <TouchableOpacity
                                         style={styles.addRuleButton}
-                                        onPress={() => setShowRuleInput(true)}
+                                        onPress={() => {
+                                            setShowRuleInput(true);
+                                            setRulesError(null);
+                                        }}
                                         disabled={isLoading || rules.length >= 20}
                                     >
                                         <Text style={styles.addRuleButtonText}>+ Add Rule</Text>
                                     </TouchableOpacity>
+                                )}
+
+                                {rulesError && (
+                                    <Text style={styles.errorText}>{rulesError}</Text>
                                 )}
                             </View>
 
@@ -440,6 +455,12 @@ const styles = StyleSheet.create({
         color: '#4285f4',
         fontSize: 16,
         fontWeight: '600',
+    },
+    errorText: {
+        color: '#e74c3c',
+        fontSize: 14,
+        marginTop: 8,
+        fontWeight: '500',
     },
     buttonRow: {
         flexDirection: 'row',
