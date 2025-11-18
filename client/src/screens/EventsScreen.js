@@ -16,6 +16,7 @@ import EventCard from '../components/EventCard';
 import SubmitEventModal from '../components/SubmitEventModal';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { useGroupRealtime } from '../hooks/useGroupRealtime';
 
 // Helper functions for cross-platform storage
 const getItemAsync = async (key) => {
@@ -43,6 +44,35 @@ export default function EventsScreen({ route, onGroupDataRefresh }) {
     useEffect(() => {
         filterEvents();
     }, [events, selectedFilter]);
+
+    // Realtime event handlers
+    const handleEventNew = (payload) => {
+        setEvents(prev => (
+            prev.some(e => e._id === payload._id) ? prev : [payload, ...prev]
+        ));
+    };
+
+    const handleEventUpdate = (payload) => {
+        setEvents(prev => prev.map(e => (
+            e._id === payload._id
+                ? { ...e, status: payload.status, votes: payload.votes, vetoCount: payload.vetoCount }
+                : e
+        )));
+    };
+
+    const handleEventDelete = (payload) => {
+        const id = payload?.eventId || payload?._id;
+        if (!id) return;
+        setEvents(prev => prev.filter(e => e._id !== id));
+    };
+
+    // Subscribe to realtime group events
+    useGroupRealtime({
+        groupId,
+        onEventNew: handleEventNew,
+        onEventUpdate: handleEventUpdate,
+        onEventDelete: handleEventDelete,
+    });
 
     const fetchEvents = async () => {
         try {

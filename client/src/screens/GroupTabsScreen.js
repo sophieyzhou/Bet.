@@ -6,6 +6,7 @@ import EventsScreen from './EventsScreen';
 import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { useGroupRealtime } from '../hooks/useGroupRealtime';
 
 const Tab = createBottomTabNavigator();
 
@@ -59,6 +60,15 @@ export default function GroupTabsScreen({ route, navigation }) {
             console.error('Error refreshing group data:', error);
         }
     }, [groupId, navigation]);
+
+    // Realtime updates for group data and title
+    useGroupRealtime({
+        groupId,
+        onGroupUpdate: (g) => {
+            setGroupData(g);
+            navigation.setOptions({ title: g.name });
+        },
+    });
 
     if (isLoading) {
         return (

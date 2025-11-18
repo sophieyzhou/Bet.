@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const passport = require('passport');
@@ -9,20 +10,24 @@ const authRoutes = require('./routes/auth');
 const groupRoutes = require('./routes/groups');
 const eventRoutes = require('./routes/events');
 const { initializePassport } = require('./middleware/auth');
+const { initializeRealtime } = require('./services/realtime');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:8081',
+  'http://localhost:8082',
+  'http://localhost:3001',
+  'http://localhost:19006', // Expo web development server
+  'http://localhost:19000',  // Alternative Expo web port
+  'http://localhost:19007'   // Second Expo web instance
+];
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:8081',
-    'http://localhost:8082',
-    'http://localhost:3001',
-    'http://localhost:19006', // Expo web development server
-    'http://localhost:19000'  // Alternative Expo web port
-  ],
+  origin: allowedOrigins,
   credentials: true
 }));
 app.use(express.json());
@@ -61,6 +66,10 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
-app.listen(PORT, () => {
+// Create HTTP server and initialize realtime (Socket.IO)
+const server = http.createServer(app);
+initializeRealtime(server, { origins: allowedOrigins });
+
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

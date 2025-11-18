@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const Group = require('../models/Group');
 const User = require('../models/User');
 const Rule = require('../models/Rule');
+const { emitToGroup } = require('../services/realtime');
 
 const router = express.Router();
 
@@ -72,6 +73,25 @@ router.post('/join', verifyToken, async (req, res) => {
         if (!user.joinedGroups.includes(group._id)) {
             user.joinedGroups.push(group._id);
             await user.save();
+        }
+
+        // Emit updated group to room so existing members see the new member
+        try {
+            const sortedMembers = [...group.members].sort((a, b) => b.totalPoints - a.totalPoints);
+            const rules = await Rule.find({ groupId: group._id });
+            emitToGroup(group._id, 'group:update', {
+                _id: group._id,
+                name: group.name,
+                description: group.description,
+                joinCode: group.joinCode,
+                members: sortedMembers,
+                memberCount: group.members.length,
+                rules,
+                createdAt: group.createdAt,
+                createdBy: group.createdBy
+            });
+        } catch (emitErr) {
+            console.error('Failed to emit group update after join:', emitErr?.message || emitErr);
         }
 
         res.status(200).json({

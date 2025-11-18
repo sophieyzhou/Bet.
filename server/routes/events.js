@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const Event = require('../models/Event');
 const Group = require('../models/Group');
 const Rule = require('../models/Rule');
+const { emitToGroup } = require('../services/realtime');
 
 const router = express.Router();
 
@@ -42,6 +43,25 @@ async function autoResolveExpiredEvents(groupId) {
     } catch (error) {
         console.error('Error auto-resolving expired events:', error);
     }
+}
+
+// Helper to build group:update payload
+async function buildGroupUpdatePayload(groupId) {
+    const group = await Group.findById(groupId);
+    if (!group) return null;
+    const sortedMembers = [...group.members].sort((a, b) => b.totalPoints - a.totalPoints);
+    const rules = await Rule.find({ groupId: group._id });
+    return {
+        _id: group._id,
+        name: group.name,
+        description: group.description,
+        joinCode: group.joinCode,
+        members: sortedMembers,
+        memberCount: group.members.length,
+        rules,
+        createdAt: group.createdAt,
+        createdBy: group.createdBy
+    };
 }
 
 // POST /api/events/create - create a new event
@@ -106,6 +126,39 @@ router.post('/create', verifyToken, async (req, res) => {
         if (memberIndex !== -1) {
             group.members[memberIndex].totalPoints += rule.points;
             await group.save();
+        }
+
+        // Build enriched event for websocket emit
+        const targetMember = group.members.find(m => m.userId.toString() === userId.toString());
+        const submitterMember = group.members.find(m => m.userId.toString() === submittedBy.toString());
+        const enrichedEvent = {
+            _id: event._id,
+            userId: event.userId,
+            userName: targetMember?.name || 'Unknown',
+            userEmail: targetMember?.email || '',
+            submittedBy: event.submittedBy,
+            submittedByName: submitterMember?.name || 'Unknown',
+            rule: {
+                _id: rule?._id,
+                description: rule?.description || 'Unknown rule',
+                points: rule?.points || 0,
+                vetoThreshold: rule?.vetoThreshold || 0
+            },
+            description: event.description,
+            status: event.status,
+            votes: event.votes,
+            vetoCount: 0,
+            createdAt: event.createdAt,
+            expiresAt: event.expiresAt
+        };
+
+        // Emit to group room
+        emitToGroup(groupId, 'events:new', enrichedEvent);
+
+        // Also emit updated group (points changed)
+        const groupUpdate = await buildGroupUpdatePayload(groupId);
+        if (groupUpdate) {
+            emitToGroup(groupId, 'group:update', groupUpdate);
         }
 
         res.status(201).json({
@@ -284,6 +337,22 @@ router.post('/:eventId/vote', verifyToken, async (req, res) => {
 
         await event.save();
 
+        // Emit events:update to group room
+        emitToGroup(event.groupId, 'events:update', {
+            _id: event._id,
+            status: event.status,
+            votes: event.votes,
+            vetoCount
+        });
+
+        // If status changed to vetoed and points removed, emit group:update
+        if (event.status === 'vetoed' && wasPending) {
+            const groupUpdate = await buildGroupUpdatePayload(event.groupId);
+            if (groupUpdate) {
+                emitToGroup(event.groupId, 'group:update', groupUpdate);
+            }
+        }
+
         res.json({
             success: true,
             event: {
@@ -377,6 +446,14 @@ router.delete('/:eventId', verifyToken, async (req, res) => {
         }
 
         console.log('Event successfully deleted:', deletedEvent._id);
+
+        // Emit events:delete to group room and updated group points
+        emitToGroup(event.groupId, 'events:delete', { eventId: deletedEvent._id });
+        const groupUpdate = await buildGroupUpdatePayload(event.groupId);
+        if (groupUpdate) {
+            emitToGroup(event.groupId, 'group:update', groupUpdate);
+        }
+
         res.json({
             success: true,
             message: 'Event deleted successfully'

@@ -144,6 +144,15 @@ bet/
    npm start
    ```
 
+### Realtime (WebSocket) Configuration
+
+- The client connects to the Socket.IO server using `EXPO_PUBLIC_SOCKET_URL`. By default it points to `http://localhost:3001`.
+- To change it, set an Expo public env var before starting the client:
+  ```bash
+  EXPO_PUBLIC_SOCKET_URL="http://<your-server-host>:3001" npm start
+  ```
+- Ensure the server's CORS allows your client origin (configured in `server/index.js`).
+
 ### Testing
 
 The app includes comprehensive error handling and user feedback. Test the authentication flow by:
