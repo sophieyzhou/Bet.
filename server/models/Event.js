@@ -26,6 +26,16 @@ const eventSchema = new mongoose.Schema({
         trim: true,
         default: ''
     },
+    // Media metadata for uploaded evidence. Actual files are stored in S3.
+    media: {
+        type: {
+            type: String,
+            enum: ['image', 'video'],
+        },
+        url: {
+            type: String,
+        }
+    },
     status: {
         type: String,
         enum: ['pending', 'approved', 'vetoed'],

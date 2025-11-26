@@ -1,11 +1,30 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
 const Event = require('../models/Event');
 const Group = require('../models/Group');
 const Rule = require('../models/Rule');
 const { emitToGroup } = require('../services/realtime');
+const { uploadMediaToS3 } = require('../services/s3');
 
 const router = express.Router();
+
+// Configure multer for memory storage
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 16 * 1024 * 1024 // 16MB limit (MongoDB document size limit)
+    },
+    fileFilter: (req, file, cb) => {
+        // Accept images and videos
+        if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image and video files are allowed'));
+        }
+    }
+});
 
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
@@ -65,10 +84,19 @@ async function buildGroupUpdatePayload(groupId) {
 }
 
 // POST /api/events/create - create a new event
-router.post('/create', verifyToken, async (req, res) => {
+router.post('/create', verifyToken, upload.single('media'), async (req, res) => {
     try {
+        console.log('Create event request received');
+        console.log('Body:', req.body);
+        console.log('File:', req.file ? { 
+            fieldname: req.file.fieldname,
+            mimetype: req.file.mimetype,
+            size: req.file.size
+        } : 'No file');
+
         const { groupId, userId, ruleId, description } = req.body;
         const submittedBy = req.userId;
+        const mediaFile = req.file;
 
         // Validation
         if (!groupId || !userId || !ruleId) {
@@ -105,7 +133,8 @@ router.post('/create', verifyToken, async (req, res) => {
         // Create event with 24-hour expiration
         const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-        const event = new Event({
+        // Prepare event data
+        const eventData = {
             groupId,
             userId,
             submittedBy,
@@ -114,7 +143,24 @@ router.post('/create', verifyToken, async (req, res) => {
             status: 'pending',
             expiresAt,
             votes: []
-        });
+        };
+
+        // Add media if file was uploaded - upload to S3 instead of storing in Mongo
+        if (mediaFile) {
+            const mediaType = mediaFile.mimetype.startsWith('image/') ? 'image' : 'video';
+            const extension = mediaFile.originalname.split('.').pop() || (mediaType === 'image' ? 'jpg' : 'mp4');
+            const safeExtension = extension.toLowerCase();
+            const key = `events/${groupId}/${Date.now()}-${userId}.${safeExtension}`;
+
+            const mediaUrl = await uploadMediaToS3(mediaFile.buffer, mediaFile.mimetype, key);
+
+            eventData.media = {
+                type: mediaType,
+                url: mediaUrl,
+            };
+        }
+
+        const event = new Event(eventData);
 
         await event.save();
 
@@ -145,6 +191,7 @@ router.post('/create', verifyToken, async (req, res) => {
                 vetoThreshold: rule?.vetoThreshold || 0
             },
             description: event.description,
+            media: event.media || null,
             status: event.status,
             votes: event.votes,
             vetoCount: 0,
@@ -170,6 +217,7 @@ router.post('/create', verifyToken, async (req, res) => {
                 submittedBy: event.submittedBy,
                 ruleId: event.ruleId,
                 description: event.description,
+                media: event.media || null,
                 status: event.status,
                 expiresAt: event.expiresAt,
                 createdAt: event.createdAt
@@ -233,30 +281,31 @@ router.get('/group/:groupId', verifyToken, async (req, res) => {
                     userEmail: targetMember?.email || '',
                     submittedBy: event.submittedBy,
                     submittedByName: submitterMember?.name || 'Unknown',
-                    rule: {
-                        _id: rule?._id,
-                        description: rule?.description || 'Unknown rule',
-                        points: rule?.points || 0,
-                        vetoThreshold: rule?.vetoThreshold || 0
-                    },
-                    description: event.description,
-                    status: event.status,
-                    votes: event.votes,
-                    vetoCount,
-                    createdAt: event.createdAt,
-                    expiresAt: event.expiresAt
-                };
-            })
-        );
+                rule: {
+                    _id: rule?._id,
+                    description: rule?.description || 'Unknown rule',
+                    points: rule?.points || 0,
+                    vetoThreshold: rule?.vetoThreshold || 0
+                },
+                description: event.description,
+                media: event.media || null,
+                status: event.status,
+                votes: event.votes,
+                vetoCount,
+                createdAt: event.createdAt,
+                expiresAt: event.expiresAt
+            };
+        })
+    );
 
-        res.json({
-            success: true,
-            events: enrichedEvents
-        });
-    } catch (error) {
-        console.error('Error fetching events:', error);
-        res.status(500).json({ error: 'Failed to fetch events' });
-    }
+    res.json({
+        success: true,
+        events: enrichedEvents
+    });
+} catch (error) {
+    console.error('Error fetching events:', error);
+    res.status(500).json({ error: 'Failed to fetch events' });
+}
 });
 
 // POST /api/events/:eventId/vote - vote to veto an event

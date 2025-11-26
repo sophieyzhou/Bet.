@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
     StyleSheet,
     Modal,
-    Alert
+    Alert,
+    Image,
+    ActivityIndicator,
+    Dimensions,
+    ScrollView
 } from 'react-native';
+import { Video } from 'expo-av';
 
 const EventCard = ({ event, currentUserId, onVoteToVeto, onDelete }) => {
     const {
@@ -21,7 +26,8 @@ const EventCard = ({ event, currentUserId, onVoteToVeto, onDelete }) => {
         expiresAt,
         userId,
         submittedBy,
-        votes
+        votes,
+        media
     } = event;
 
     const hasUserVoted = votes.some(v => v.userId === currentUserId);
@@ -30,6 +36,9 @@ const EventCard = ({ event, currentUserId, onVoteToVeto, onDelete }) => {
     // Can only veto events you didn't create and that are not applied to you
     const canVeto = !isOwnEvent && !isUserSubmitter;
     const isPending = status === 'pending';
+    
+    const videoRef = useRef(null);
+    const [showMediaModal, setShowMediaModal] = useState(false);
 
     // Format date nicely (UTC to local time)
     const formatDate = (dateString) => {
@@ -51,6 +60,20 @@ const EventCard = ({ event, currentUserId, onVoteToVeto, onDelete }) => {
     const formattedExpiresAt = formatDate(expiresAt);
     const [showMenu, setShowMenu] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+    const hasMedia = !!media && !!media.url && !!media.type;
+
+    const getMediaUri = () => {
+        if (!hasMedia) return null;
+        return media.url;
+    };
+
+    // Auto-play video when component mounts
+    useEffect(() => {
+        if (hasMedia && media.type === 'video' && videoRef.current) {
+            videoRef.current.playAsync();
+        }
+    }, [hasMedia, media]);
 
     const handleDeleteClick = () => {
         console.log('handleDeleteClick called, eventId:', _id);
@@ -133,6 +156,33 @@ const EventCard = ({ event, currentUserId, onVoteToVeto, onDelete }) => {
             {/* Description/Notes */}
             {description && description.trim() !== '' && (
                 <Text style={styles.description}>{description}</Text>
+            )}
+
+            {/* Media Display */}
+            {hasMedia && (
+                <TouchableOpacity
+                    style={styles.mediaContainer}
+                    onPress={() => setShowMediaModal(true)}
+                    activeOpacity={0.9}
+                >
+                    {media.type === 'image' ? (
+                        <Image
+                            source={{ uri: getMediaUri() }}
+                            style={styles.mediaImage}
+                            resizeMode="cover"
+                        />
+                    ) : (
+                        <Video
+                            ref={videoRef}
+                            source={{ uri: getMediaUri() }}
+                            style={styles.mediaVideo}
+                            resizeMode="cover"
+                            isLooping
+                            isMuted={true}
+                            shouldPlay={true}
+                        />
+                    )}
+                </TouchableOpacity>
             )}
 
             {/* Status Badge */}
@@ -295,6 +345,46 @@ const EventCard = ({ event, currentUserId, onVoteToVeto, onDelete }) => {
                     </TouchableOpacity>
                 </View>
             </Modal>
+
+            {/* Fullscreen Media Modal */}
+            {hasMedia && (
+                <Modal
+                    visible={showMediaModal}
+                    transparent={true}
+                    animationType="fade"
+                    onRequestClose={() => setShowMediaModal(false)}
+                >
+                    <View style={styles.fullscreenModalOverlay}>
+                        <TouchableOpacity
+                            style={styles.fullscreenCloseButton}
+                            onPress={() => setShowMediaModal(false)}
+                        >
+                            <Text style={styles.fullscreenCloseText}>✕</Text>
+                        </TouchableOpacity>
+                        <ScrollView
+                            contentContainerStyle={styles.fullscreenScrollContent}
+                            maximumZoomScale={3}
+                            minimumZoomScale={1}
+                        >
+                            {media.type === 'image' ? (
+                                <Image
+                                    source={{ uri: getMediaUri() }}
+                                    style={styles.fullscreenImage}
+                                    resizeMode="contain"
+                                />
+                            ) : (
+                                <Video
+                                    source={{ uri: getMediaUri() }}
+                                    style={styles.fullscreenVideo}
+                                    resizeMode="contain"
+                                    useNativeControls
+                                    shouldPlay
+                                />
+                            )}
+                        </ScrollView>
+                    </View>
+                </Modal>
+            )}
         </View>
     );
 };
@@ -533,6 +623,70 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 16,
         fontWeight: '600',
+    },
+    mediaContainer: {
+        width: '100%',
+        height: 200,
+        borderRadius: 8,
+        overflow: 'hidden',
+        marginBottom: 10,
+        backgroundColor: '#f8f9fa',
+        position: 'relative',
+    },
+    mediaLoadingContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f8f9fa',
+        zIndex: 1,
+    },
+    mediaImage: {
+        width: '100%',
+        height: '100%',
+    },
+    mediaVideo: {
+        width: '100%',
+        height: '100%',
+    },
+    fullscreenModalOverlay: {
+        flex: 1,
+        backgroundColor: '#000',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fullscreenCloseButton: {
+        position: 'absolute',
+        top: 50,
+        right: 20,
+        zIndex: 10,
+        backgroundColor: 'rgba(255, 255, 255, 0.3)',
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fullscreenCloseText: {
+        color: '#fff',
+        fontSize: 24,
+        fontWeight: 'bold',
+    },
+    fullscreenScrollContent: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fullscreenImage: {
+        width: Dimensions.get('window').width,
+        height: Dimensions.get('window').height,
+    },
+    fullscreenVideo: {
+        width: Dimensions.get('window').width,
+        height: Dimensions.get('window').height * 0.7,
     },
 });
 

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
@@ -24,16 +25,62 @@ export const eventService = {
 
     async createEvent(groupId, eventData, token) {
         try {
-            const response = await axios.post(
-                `${API_BASE_URL}/events/create`,
-                { groupId, ...eventData },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
+            let response;
+            
+            // If media is present, use FormData for multipart upload
+            if (eventData.media) {
+                const formData = new FormData();
+                formData.append('groupId', groupId);
+                formData.append('userId', eventData.userId);
+                formData.append('ruleId', eventData.ruleId);
+                if (eventData.description) {
+                    formData.append('description', eventData.description);
                 }
-            );
+                
+                // Append media file
+                const { uri, mimeType, type } = eventData.media;
+                const filename = uri.split('/').pop();
+                const match = /\.(\w+)$/.exec(filename);
+                const fileType = mimeType || (match ? `${type}/${match[1]}` : type);
+                
+                if (Platform.OS === 'web') {
+                    // For web, we need to convert the URI to a Blob
+                    const fetchResponse = await fetch(uri);
+                    const blob = await fetchResponse.blob();
+                    formData.append('media', blob, filename);
+                } else {
+                    // For mobile (iOS/Android)
+                    formData.append('media', {
+                        uri,
+                        name: filename,
+                        type: fileType
+                    });
+                }
+
+                response = await axios.post(
+                    `${API_BASE_URL}/events/create`,
+                    formData,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    }
+                );
+            } else {
+                // No media, use regular JSON
+                response = await axios.post(
+                    `${API_BASE_URL}/events/create`,
+                    { groupId, ...eventData },
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+            }
+            
             return response.data;
         } catch (error) {
             console.error('Error creating event:', error);

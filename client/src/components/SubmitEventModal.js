@@ -8,15 +8,54 @@ import {
     Modal,
     ScrollView,
     Alert,
-    ActivityIndicator
+    ActivityIndicator,
+    Image
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import * as ImagePicker from 'expo-image-picker';
+import { Video } from 'expo-av';
 
 export default function SubmitEventModal({ visible, onClose, members, rules, onSubmit }) {
     const [selectedUserId, setSelectedUserId] = useState('');
     const [selectedRuleId, setSelectedRuleId] = useState('');
     const [description, setDescription] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [media, setMedia] = useState(null); // {uri, type, mimeType}
+
+    const pickMedia = async () => {
+        try {
+            // Request permissions
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission Required', 'Please grant permission to access your media library');
+                return;
+            }
+
+            // Launch image picker
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.All,
+                allowsEditing: true,
+                quality: 0.8,
+                videoMaxDuration: 60, // 60 seconds max for videos
+            });
+
+            if (!result.canceled && result.assets && result.assets.length > 0) {
+                const asset = result.assets[0];
+                setMedia({
+                    uri: asset.uri,
+                    type: asset.type, // 'image' or 'video'
+                    mimeType: asset.mimeType || (asset.type === 'video' ? 'video/mp4' : 'image/jpeg')
+                });
+            }
+        } catch (error) {
+            console.error('Error picking media:', error);
+            Alert.alert('Error', 'Failed to select media');
+        }
+    };
+
+    const removeMedia = () => {
+        setMedia(null);
+    };
 
     const handleSubmit = async () => {
         // Validation
@@ -36,13 +75,15 @@ export default function SubmitEventModal({ visible, onClose, members, rules, onS
             await onSubmit({
                 userId: selectedUserId,
                 ruleId: selectedRuleId,
-                description: description.trim()
+                description: description.trim(),
+                media: media
             });
 
             // Reset form
             setSelectedUserId('');
             setSelectedRuleId('');
             setDescription('');
+            setMedia(null);
 
             onClose();
         } catch (error) {
@@ -57,6 +98,7 @@ export default function SubmitEventModal({ visible, onClose, members, rules, onS
         setSelectedUserId('');
         setSelectedRuleId('');
         setDescription('');
+        setMedia(null);
         onClose();
     };
 
@@ -139,6 +181,42 @@ export default function SubmitEventModal({ visible, onClose, members, rules, onS
                             numberOfLines={4}
                             editable={!isLoading}
                         />
+
+                        {/* Media Upload */}
+                        <Text style={styles.label}>Add Photo/Video Evidence (Optional)</Text>
+                        {!media ? (
+                            <TouchableOpacity
+                                style={styles.mediaButton}
+                                onPress={pickMedia}
+                                disabled={isLoading}
+                            >
+                                <Text style={styles.mediaButtonText}>📷 Select Image or Video</Text>
+                            </TouchableOpacity>
+                        ) : (
+                            <View style={styles.mediaPreviewContainer}>
+                                {media.type === 'image' ? (
+                                    <Image
+                                        source={{ uri: media.uri }}
+                                        style={styles.mediaPreview}
+                                        resizeMode="cover"
+                                    />
+                                ) : (
+                                    <Video
+                                        source={{ uri: media.uri }}
+                                        style={styles.mediaPreview}
+                                        useNativeControls
+                                        resizeMode="contain"
+                                    />
+                                )}
+                                <TouchableOpacity
+                                    style={styles.removeMediaButton}
+                                    onPress={removeMedia}
+                                    disabled={isLoading}
+                                >
+                                    <Text style={styles.removeMediaText}>✕ Remove</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
 
                         {/* Buttons */}
                         <View style={styles.buttonRow}>
@@ -263,5 +341,41 @@ const styles = StyleSheet.create({
     },
     disabledButton: {
         opacity: 0.6,
+    },
+    mediaButton: {
+        backgroundColor: '#e8f4f8',
+        paddingVertical: 15,
+        borderRadius: 8,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#4285f4',
+        borderStyle: 'dashed',
+        marginBottom: 10,
+    },
+    mediaButtonText: {
+        color: '#4285f4',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    mediaPreviewContainer: {
+        marginBottom: 10,
+    },
+    mediaPreview: {
+        width: '100%',
+        height: 200,
+        borderRadius: 8,
+        backgroundColor: '#f8f9fa',
+    },
+    removeMediaButton: {
+        marginTop: 10,
+        backgroundColor: '#e74c3c',
+        paddingVertical: 10,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    removeMediaText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '600',
     },
 });
