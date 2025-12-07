@@ -150,16 +150,14 @@ export default function LeaderboardScreen({ route, navigation }) {
                     <Card.Content>
                     <View style={styles.groupNameRow}>
                             <Text variant="headlineMedium" style={styles.groupName}>{group.name}</Text>
-                        {isCreator && (
-                                <Button
-                                    mode="contained"
-                                    onPress={() => setShowEditModal(true)}
+                            <Button
+                                mode="contained"
+                                onPress={() => setShowEditModal(true)}
                                 style={styles.editButton}
-                                    compact
+                                compact
                             >
-                                    Edit
-                                </Button>
-                        )}
+                                Edit
+                            </Button>
                     </View>
                     {group.description && (
                             <Text variant="bodyMedium" style={styles.groupDescription}>
