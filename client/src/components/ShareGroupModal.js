@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import {
-    View,
-    Text,
-    TouchableOpacity,
     StyleSheet,
-    Modal,
-    Alert,
-    Clipboard
+    Clipboard,
+    Dimensions
 } from 'react-native';
+import { Dialog, Button, Text, Card, Portal } from 'react-native-paper';
 import { Platform } from 'react-native';
+
+const screenHeight = Dimensions.get('window').height;
 
 export default function ShareGroupModal({ visible, onClose, joinCode }) {
     const [copied, setCopied] = useState(false);
@@ -24,120 +23,58 @@ export default function ShareGroupModal({ visible, onClose, joinCode }) {
     };
 
     return (
-        <Modal
-            visible={visible}
-            animationType="fade"
-            transparent={true}
-            onRequestClose={onClose}
-        >
-            <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
-                    <Text style={styles.modalTitle}>Share Group</Text>
-                    <Text style={styles.helperText}>
+        <Portal>
+            <Dialog visible={visible} onDismiss={onClose} style={{ maxHeight: screenHeight * 0.9 }}>
+                <Dialog.Title>Share Group</Dialog.Title>
+                <Dialog.Content>
+                    <Text variant="bodyMedium" style={styles.helperText}>
                         Share this code with friends to let them join:
                     </Text>
                     
-                    <View style={styles.codeContainer}>
-                        <Text style={styles.joinCodeText}>{joinCode}</Text>
-                    </View>
-
-                    <TouchableOpacity
-                        style={[styles.copyButton, copied && styles.copyButtonCopied]}
+                    <Card style={styles.codeContainer} mode="outlined">
+                        <Card.Content>
+                            <Text variant="displaySmall" style={styles.joinCodeText}>
+                                {joinCode}
+                            </Text>
+                        </Card.Content>
+                    </Card>
+                </Dialog.Content>
+                <Dialog.Actions>
+                    <Button
+                        mode={copied ? "contained" : "outlined"}
                         onPress={handleCopy}
-                        activeOpacity={0.7}
+                        buttonColor={copied ? "#27ae60" : undefined}
                     >
-                        <Text style={styles.copyButtonText}>
                             {copied ? '✓ Copied!' : 'Copy Code'}
-                        </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.closeButton}
+                    </Button>
+                    <Button
+                        mode="contained"
                         onPress={onClose}
-                        activeOpacity={0.7}
                     >
-                        <Text style={styles.closeButtonText}>Close</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </Modal>
+                        Close
+                    </Button>
+                </Dialog.Actions>
+            </Dialog>
+        </Portal>
     );
 }
 
 const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    modalContent: {
-        backgroundColor: '#fff',
-        borderRadius: 15,
-        padding: 25,
-        width: '100%',
-        maxWidth: 400,
-        alignItems: 'center',
-    },
-    modalTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#2c3e50',
-        marginBottom: 10,
-        textAlign: 'center',
-    },
     helperText: {
-        fontSize: 16,
-        color: '#7f8c8d',
         textAlign: 'center',
         marginBottom: 20,
+        color: '#7f8c8d',
     },
     codeContainer: {
-        backgroundColor: '#f8f9fa',
-        paddingVertical: 20,
-        paddingHorizontal: 40,
-        borderRadius: 10,
-        marginBottom: 20,
-        width: '100%',
+        marginTop: 10,
+        marginBottom: 10,
         alignItems: 'center',
     },
     joinCodeText: {
-        fontSize: 36,
-        fontWeight: 'bold',
         color: '#4285f4',
         letterSpacing: 5,
+        textAlign: 'center',
         fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    },
-    copyButton: {
-        backgroundColor: '#4285f4',
-        paddingVertical: 12,
-        paddingHorizontal: 30,
-        borderRadius: 8,
-        marginBottom: 10,
-        width: '100%',
-        alignItems: 'center',
-    },
-    copyButtonCopied: {
-        backgroundColor: '#27ae60',
-    },
-    copyButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    closeButton: {
-        backgroundColor: '#e1e8ed',
-        paddingVertical: 12,
-        paddingHorizontal: 30,
-        borderRadius: 8,
-        width: '100%',
-        alignItems: 'center',
-    },
-    closeButtonText: {
-        color: '#7f8c8d',
-        fontSize: 16,
-        fontWeight: '600',
     },
 });
 

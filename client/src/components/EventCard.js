@@ -1,16 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
-    Text,
-    TouchableOpacity,
     StyleSheet,
-    Modal,
     Alert,
     Image,
-    ActivityIndicator,
     Dimensions,
     ScrollView
 } from 'react-native';
+import { Card, Text, Chip, Button, IconButton, Dialog, Portal, ProgressBar } from 'react-native-paper';
 import { Video } from 'expo-av';
 
 const EventCard = ({ event, currentUserId, onVoteToVeto, onDelete }) => {
@@ -125,45 +122,51 @@ const EventCard = ({ event, currentUserId, onVoteToVeto, onDelete }) => {
     };
 
     return (
-        <View style={styles.card}>
+        <Card style={styles.card} mode="elevated" elevation={2}>
+            <Card.Content>
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
-                    <Text style={styles.userName}>{userName}</Text>
-                    <Text style={styles.ruleDescription}>{rule.description}</Text>
+                        <Text variant="titleMedium" style={styles.userName}>{userName}</Text>
+                        <Text variant="bodySmall" style={styles.ruleDescription}>{rule.description}</Text>
                 </View>
                 <View style={styles.headerRight}>
-                    <Text style={[styles.points, { color: getPointsColor() }]}>
+                        <Chip
+                            style={[styles.pointsChip, { backgroundColor: getPointsColor() === '#27ae60' ? '#E8F5E9' : '#FFEBEE' }]}
+                            textStyle={[styles.pointsText, { color: getPointsColor() }]}
+                        >
                         {rule.points > 0 ? '+' : ''}{rule.points} pts
-                    </Text>
+                        </Chip>
                     {isUserSubmitter && (
-                        <TouchableOpacity
-                            style={styles.menuButton}
+                            <IconButton
+                                icon="dots-vertical"
+                                size={20}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                             onPress={() => {
                                 console.log('Menu button pressed, eventId:', _id, 'status:', status);
                                 setShowMenu(true);
                             }}
-                        >
-                            <Text style={styles.menuButtonText}>⋯</Text>
-                        </TouchableOpacity>
+                            />
                     )}
                 </View>
             </View>
 
             {/* Submitted by */}
-            <Text style={styles.submittedBy}>Submitted by {submittedByName}</Text>
+                <Text variant="bodySmall" style={styles.submittedBy}>
+                    Submitted by {submittedByName}
+                </Text>
 
             {/* Description/Notes */}
             {description && description.trim() !== '' && (
-                <Text style={styles.description}>{description}</Text>
+                    <Text variant="bodyMedium" style={styles.description}>{description}</Text>
             )}
 
             {/* Media Display */}
             {hasMedia && (
-                <TouchableOpacity
+                    <Card
                     style={styles.mediaContainer}
                     onPress={() => setShowMediaModal(true)}
-                    activeOpacity={0.9}
+                        mode="outlined"
                 >
                     {media.type === 'image' ? (
                         <Image
@@ -182,20 +185,25 @@ const EventCard = ({ event, currentUserId, onVoteToVeto, onDelete }) => {
                             shouldPlay={true}
                         />
                     )}
-                </TouchableOpacity>
+                    </Card>
             )}
 
             {/* Status Badge */}
             <View style={styles.statusRow}>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor() }]}>
-                    <Text style={styles.statusText}>{getStatusText()}</Text>
-                </View>
+                    <Chip
+                        style={[styles.statusChip, { backgroundColor: getStatusColor() }]}
+                        textStyle={styles.statusText}
+                    >
+                        {getStatusText()}
+                    </Chip>
             </View>
 
             {/* Date Information */}
             <View style={styles.dateRow}>
-                <Text style={styles.dateText}>Created: {formattedCreatedAt}</Text>
-                <Text style={styles.dateText}>
+                    <Text variant="bodySmall" style={styles.dateText}>
+                        Created: {formattedCreatedAt}
+                    </Text>
+                    <Text variant="bodySmall" style={styles.dateText}>
                     {status === 'approved' ? 'Approved: ' : 'Expires: '}
                     {formattedExpiresAt}
                 </Text>
@@ -205,166 +213,113 @@ const EventCard = ({ event, currentUserId, onVoteToVeto, onDelete }) => {
             {isPending && (
                 <View style={styles.vetoSection}>
                     <View style={styles.vetoProgress}>
-                        <Text style={styles.vetoText}>
+                            <Text variant="bodyMedium" style={styles.vetoText}>
                             {vetoCount}/{rule.vetoThreshold} vetos
                         </Text>
-                        <View style={styles.progressBar}>
-                            <View
-                                style={[
-                                    styles.progressFill,
-                                    { width: `${Math.min((vetoCount / rule.vetoThreshold) * 100, 100)}%` }
-                                ]}
+                            <ProgressBar
+                                progress={Math.min(vetoCount / rule.vetoThreshold, 1)}
+                                color="#e74c3c"
+                                style={styles.progressBar}
                             />
-                        </View>
                     </View>
 
                     {canVeto && !hasUserVoted && (
-                        <TouchableOpacity
+                            <Button
+                                mode="contained"
+                                buttonColor="#e74c3c"
+                                onPress={() => onVoteToVeto(_id)}
                             style={styles.vetoButton}
-                            onPress={() => onVoteToVeto(_id)}
+                                compact
                         >
-                            <Text style={styles.vetoButtonText}>Vote to Veto</Text>
-                        </TouchableOpacity>
+                                Vote to Veto
+                            </Button>
                     )}
 
                     {hasUserVoted && (
-                        <View style={styles.votedBadge}>
-                            <Text style={styles.votedText}>You voted to veto</Text>
-                        </View>
+                            <Chip style={styles.votedBadge} textStyle={styles.votedText}>
+                                You voted to veto
+                            </Chip>
                     )}
 
                     {isOwnEvent && (
-                        <Text style={styles.cannotVoteText}>Your event</Text>
+                            <Text variant="bodySmall" style={styles.cannotVoteText}>
+                                Your event
+                            </Text>
                     )}
 
                     {isUserSubmitter && !isOwnEvent && !hasUserVoted && (
-                        <Text style={styles.cannotVoteText}>You created this event</Text>
+                            <Text variant="bodySmall" style={styles.cannotVoteText}>
+                                You created this event
+                            </Text>
                     )}
                 </View>
             )}
+            </Card.Content>
 
-            {/* Menu Modal */}
-            <Modal
-                visible={showMenu}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => {
-                    console.log('Modal onRequestClose called');
+            {/* Menu Dialog */}
+            <Portal>
+                <Dialog visible={showMenu} onDismiss={() => setShowMenu(false)}>
+                    <Dialog.Title>Event Options</Dialog.Title>
+                    <Dialog.Content>
+                        <Button
+                            mode="text"
+                            textColor="#e74c3c"
+                            onPress={() => {
                     setShowMenu(false);
-                }}
-            >
-                <View style={styles.menuOverlay}>
-                    <TouchableOpacity
-                        style={StyleSheet.absoluteFill}
-                        activeOpacity={1}
-                        onPress={() => {
-                            console.log('Overlay pressed, closing menu');
-                            setShowMenu(false);
+                                handleDeleteClick();
                         }}
-                    />
-                    <TouchableOpacity
-                        activeOpacity={1}
-                        onPress={(e) => {
-                            e.stopPropagation();
-                        }}
-                    >
-                        <View style={styles.menuContent}>
-                            <TouchableOpacity
-                                style={styles.menuItem}
-                                onPress={(e) => {
-                                    console.log('Delete menu item pressed');
-                                    e.stopPropagation();
-                                    handleDeleteClick();
-                                }}
-                                activeOpacity={0.7}
-                            >
-                                <Text style={styles.menuItemTextDelete}>Delete Event</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.menuItem, styles.menuItemLast]}
-                                onPress={(e) => {
-                                    console.log('Cancel menu item pressed');
-                                    e.stopPropagation();
-                                    setShowMenu(false);
-                                }}
-                                activeOpacity={0.7}
-                            >
-                                <Text style={styles.menuItemText}>Cancel</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-            </Modal>
+                        >
+                            Delete Event
+                        </Button>
+                    </Dialog.Content>
+                    <Dialog.Actions>
+                        <Button onPress={() => setShowMenu(false)}>Cancel</Button>
+                    </Dialog.Actions>
+                </Dialog>
 
-            {/* Delete Confirmation Modal */}
-            <Modal
-                visible={showDeleteConfirm}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setShowDeleteConfirm(false)}
-            >
-                <View style={styles.menuOverlay}>
-                    <TouchableOpacity
-                        style={StyleSheet.absoluteFill}
-                        activeOpacity={1}
-                        onPress={() => setShowDeleteConfirm(false)}
-                    />
-                    <TouchableOpacity
-                        activeOpacity={1}
-                        onPress={(e) => e.stopPropagation()}
-                    >
-                        <View style={styles.confirmModalContent}>
-                            <Text style={styles.confirmModalTitle}>Delete Event</Text>
-                            <Text style={styles.confirmModalMessage}>
+                {/* Delete Confirmation Dialog */}
+                <Dialog visible={showDeleteConfirm} onDismiss={() => setShowDeleteConfirm(false)}>
+                    <Dialog.Title>Delete Event</Dialog.Title>
+                    <Dialog.Content>
+                        <Text variant="bodyMedium">
                                 Are you sure you want to delete this event? This action cannot be undone.
                             </Text>
-                            <View style={styles.confirmModalButtons}>
-                                <TouchableOpacity
-                                    style={[styles.confirmModalButton, styles.confirmModalButtonCancel]}
-                                    onPress={(e) => {
-                                        e.stopPropagation();
-                                        console.log('Delete cancelled');
-                                        setShowDeleteConfirm(false);
-                                    }}
-                                    activeOpacity={0.7}
+                    </Dialog.Content>
+                    <Dialog.Actions>
+                        <Button onPress={() => setShowDeleteConfirm(false)}>Cancel</Button>
+                        <Button
+                            mode="contained"
+                            buttonColor="#e74c3c"
+                            onPress={handleDeleteConfirm}
                                 >
-                                    <Text style={styles.confirmModalButtonTextCancel}>Cancel</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.confirmModalButton, styles.confirmModalButtonDelete]}
-                                    onPress={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteConfirm();
-                                    }}
-                                    activeOpacity={0.7}
-                                >
-                                    <Text style={styles.confirmModalButtonTextDelete}>Delete</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-            </Modal>
+                            Delete
+                        </Button>
+                    </Dialog.Actions>
+                </Dialog>
 
-            {/* Fullscreen Media Modal */}
+                {/* Fullscreen Media Dialog */}
             {hasMedia && (
-                <Modal
+                    <Dialog
                     visible={showMediaModal}
-                    transparent={true}
-                    animationType="fade"
-                    onRequestClose={() => setShowMediaModal(false)}
+                        onDismiss={() => setShowMediaModal(false)}
+                        style={[styles.fullscreenDialog, { maxHeight: Dimensions.get('window').height }]}
                 >
-                    <View style={styles.fullscreenModalOverlay}>
-                        <TouchableOpacity
+                        <Dialog.Actions style={styles.fullscreenDialogActions}>
+                            <IconButton
+                                icon="close"
+                                size={24}
+                                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                                onPress={() => setShowMediaModal(false)}
+                                iconColor="#fff"
                             style={styles.fullscreenCloseButton}
-                            onPress={() => setShowMediaModal(false)}
-                        >
-                            <Text style={styles.fullscreenCloseText}>✕</Text>
-                        </TouchableOpacity>
+                            />
+                        </Dialog.Actions>
+                        <Dialog.ScrollArea>
                         <ScrollView
                             contentContainerStyle={styles.fullscreenScrollContent}
                             maximumZoomScale={3}
                             minimumZoomScale={1}
+                                keyboardShouldPersistTaps="handled"
                         >
                             {media.type === 'image' ? (
                                 <Image
@@ -382,27 +337,17 @@ const EventCard = ({ event, currentUserId, onVoteToVeto, onDelete }) => {
                                 />
                             )}
                         </ScrollView>
-                    </View>
-                </Modal>
+                        </Dialog.ScrollArea>
+                    </Dialog>
             )}
-        </View>
+            </Portal>
+        </Card>
     );
 };
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        padding: 15,
         marginBottom: 15,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3.84,
-        elevation: 5,
     },
     header: {
         flexDirection: 'row',
@@ -418,36 +363,26 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
-    menuButton: {
-        padding: 5,
-        marginLeft: 5,
-    },
-    menuButtonText: {
-        fontSize: 24,
-        color: '#7f8c8d',
-        lineHeight: 24,
-    },
     userName: {
-        fontSize: 18,
-        fontWeight: 'bold',
         color: '#2c3e50',
         marginBottom: 4,
     },
     ruleDescription: {
-        fontSize: 14,
         color: '#7f8c8d',
     },
-    points: {
-        fontSize: 20,
-        fontWeight: 'bold',
+    pointsChip: {
+        height: 32,
+        marginRight: 8,
+    },
+    pointsText: {
+        fontSize: 14,
+        fontWeight: '600',
     },
     submittedBy: {
-        fontSize: 12,
         color: '#95a5a6',
         marginBottom: 8,
     },
     description: {
-        fontSize: 14,
         color: '#2c3e50',
         marginBottom: 10,
         lineHeight: 20,
@@ -458,10 +393,8 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         marginBottom: 10,
     },
-    statusBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 12,
+    statusChip: {
+        height: 28,
     },
     statusText: {
         color: '#fff',
@@ -472,7 +405,6 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     dateText: {
-        fontSize: 12,
         color: '#7f8c8d',
         marginBottom: 4,
     },
@@ -486,203 +418,71 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     vetoText: {
-        fontSize: 14,
         color: '#2c3e50',
-        marginBottom: 5,
-        fontWeight: '600',
+        marginBottom: 8,
     },
     progressBar: {
         height: 8,
-        backgroundColor: '#ecf0f1',
         borderRadius: 4,
-        overflow: 'hidden',
-    },
-    progressFill: {
-        height: '100%',
-        backgroundColor: '#e74c3c',
-        borderRadius: 4,
+        marginTop: 4,
     },
     vetoButton: {
-        backgroundColor: '#e74c3c',
-        paddingVertical: 10,
-        borderRadius: 6,
-        alignItems: 'center',
-    },
-    vetoButtonText: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '600',
+        marginTop: 8,
     },
     votedBadge: {
+        height: 32,
         backgroundColor: '#95a5a6',
-        paddingVertical: 10,
-        borderRadius: 6,
-        alignItems: 'center',
+        marginTop: 8,
     },
     votedText: {
         color: '#fff',
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: '600',
     },
     cannotVoteText: {
         textAlign: 'center',
         color: '#95a5a6',
-        fontSize: 14,
         fontStyle: 'italic',
-    },
-    menuOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        position: 'relative',
-    },
-    menuContent: {
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        padding: 10,
-        minWidth: 200,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    menuItem: {
-        paddingVertical: 12,
-        paddingHorizontal: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e1e8ed',
-    },
-    menuItemLast: {
-        borderBottomWidth: 0,
-    },
-    menuItemText: {
-        fontSize: 16,
-        color: '#2c3e50',
-    },
-    menuItemTextDelete: {
-        fontSize: 16,
-        color: '#e74c3c',
-        fontWeight: '600',
-    },
-    confirmModalContent: {
-        backgroundColor: '#fff',
-        borderRadius: 15,
-        padding: 20,
-        minWidth: 300,
-        maxWidth: '90%',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    confirmModalTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#2c3e50',
-        marginBottom: 10,
-    },
-    confirmModalMessage: {
-        fontSize: 16,
-        color: '#7f8c8d',
-        marginBottom: 20,
-        lineHeight: 22,
-    },
-    confirmModalButtons: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-    },
-    confirmModalButton: {
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 8,
-        minWidth: 80,
-        alignItems: 'center',
-    },
-    confirmModalButtonCancel: {
-        backgroundColor: '#e1e8ed',
-        marginRight: 10,
-    },
-    confirmModalButtonDelete: {
-        backgroundColor: '#e74c3c',
-    },
-    confirmModalButtonTextCancel: {
-        color: '#2c3e50',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    confirmModalButtonTextDelete: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
+        marginTop: 8,
     },
     mediaContainer: {
         width: '100%',
         height: 200,
-        borderRadius: 8,
-        overflow: 'hidden',
         marginBottom: 10,
-        backgroundColor: '#f8f9fa',
-        position: 'relative',
-    },
-    mediaLoadingContainer: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f8f9fa',
-        zIndex: 1,
+        overflow: 'hidden',
     },
     mediaImage: {
         width: '100%',
-        height: '100%',
+        height: 200,
     },
     mediaVideo: {
         width: '100%',
-        height: '100%',
+        height: 200,
     },
-    fullscreenModalOverlay: {
-        flex: 1,
+    fullscreenDialog: {
         backgroundColor: '#000',
-        justifyContent: 'center',
-        alignItems: 'center',
+        margin: 0,
+        maxHeight: '100%',
+    },
+    fullscreenDialogActions: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        zIndex: 10,
+        backgroundColor: 'transparent',
     },
     fullscreenCloseButton: {
-        position: 'absolute',
-        top: 50,
-        right: 20,
-        zIndex: 10,
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    fullscreenCloseText: {
-        color: '#fff',
-        fontSize: 24,
-        fontWeight: 'bold',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     fullscreenScrollContent: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        minHeight: Dimensions.get('window').height * 0.8,
     },
     fullscreenImage: {
         width: Dimensions.get('window').width,
-        height: Dimensions.get('window').height,
+        height: Dimensions.get('window').height * 0.8,
     },
     fullscreenVideo: {
         width: Dimensions.get('window').width,

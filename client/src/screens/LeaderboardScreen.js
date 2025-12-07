@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
-    Text,
-    TouchableOpacity,
     StyleSheet,
     SafeAreaView,
-    ActivityIndicator,
     ScrollView,
     Alert
 } from 'react-native';
+import { Text, Card, Button, ActivityIndicator, Chip, Surface } from 'react-native-paper';
 import { groupService } from '../services/groupService';
 import { useAuth } from '../context/AuthContext';
 import CreateGroupModal from '../components/CreateGroupModal';
@@ -119,8 +117,8 @@ export default function LeaderboardScreen({ route, navigation }) {
         return (
             <SafeAreaView style={styles.container}>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#4285f4" />
-                    <Text style={styles.loadingText}>Loading leaderboard...</Text>
+                    <ActivityIndicator size="large" />
+                    <Text variant="bodyLarge" style={styles.loadingText}>Loading leaderboard...</Text>
                 </View>
             </SafeAreaView>
         );
@@ -130,10 +128,10 @@ export default function LeaderboardScreen({ route, navigation }) {
         return (
             <SafeAreaView style={styles.container}>
                 <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>Failed to load group</Text>
-                    <TouchableOpacity style={styles.retryButton} onPress={fetchGroupDetails}>
-                        <Text style={styles.retryButtonText}>Retry</Text>
-                    </TouchableOpacity>
+                    <Text variant="titleLarge" style={styles.errorText}>Failed to load group</Text>
+                    <Button mode="contained" onPress={fetchGroupDetails} style={styles.retryButton}>
+                        Retry
+                    </Button>
                 </View>
             </SafeAreaView>
         );
@@ -141,65 +139,90 @@ export default function LeaderboardScreen({ route, navigation }) {
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <ScrollView
+                style={styles.scrollView}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+            >
                 {/* Header Section */}
-                <View style={styles.headerCard}>
+                <Card style={styles.headerCard} mode="elevated" elevation={2}>
+                    <Card.Content>
                     <View style={styles.groupNameRow}>
-                        <Text style={styles.groupName}>{group.name}</Text>
+                            <Text variant="headlineMedium" style={styles.groupName}>{group.name}</Text>
                         {isCreator && (
-                            <TouchableOpacity
+                                <Button
+                                    mode="contained"
+                                    onPress={() => setShowEditModal(true)}
                                 style={styles.editButton}
-                                onPress={() => setShowEditModal(true)}
+                                    compact
                             >
-                                <Text style={styles.editButtonText}>Edit</Text>
-                            </TouchableOpacity>
+                                    Edit
+                                </Button>
                         )}
                     </View>
                     {group.description && (
-                        <Text style={styles.groupDescription}>{group.description}</Text>
+                            <Text variant="bodyMedium" style={styles.groupDescription}>
+                                {group.description}
+                            </Text>
                     )}
 
                     <View style={styles.infoRow}>
-                        <Text style={styles.memberCount}>{group.memberCount} members</Text>
+                            <Chip style={styles.memberCount} textStyle={styles.memberCountText}>
+                                {group.memberCount} members
+                            </Chip>
                     </View>
 
                     {/* Share Group Button */}
-                    <TouchableOpacity
+                        <Button
+                            mode="contained"
+                            onPress={handleShareGroup}
                         style={styles.shareButton}
-                        onPress={handleShareGroup}
-                        activeOpacity={0.7}
-                    >
-                        <Text style={styles.shareButtonText}>Share Group</Text>
-                    </TouchableOpacity>
-                </View>
+                        >
+                            Share Group
+                        </Button>
+                    </Card.Content>
+                </Card>
 
                 {/* Leaderboard Section */}
-                <View style={styles.leaderboardSection}>
-                    <Text style={styles.sectionTitle}>Leaderboard</Text>
+                <Card style={styles.leaderboardSection} mode="elevated" elevation={2}>
+                    <Card.Content>
+                        <Text variant="titleLarge" style={styles.sectionTitle}>Leaderboard</Text>
                     {group.members.map((member, index) => {
                         const rank = index + 1;
                         const isCurrentUser = member.userId === user?.id || member.email === user?.email;
 
                         return (
-                            <View
+                                <Surface
                                 key={member.userId}
                                 style={[
                                     styles.leaderboardRow,
                                     isCurrentUser && styles.currentUserRow
                                 ]}
+                                    elevation={isCurrentUser ? 1 : 0}
                             >
-                                <Text style={styles.rankText}>{getRankDisplay(rank)}</Text>
-                                <View style={styles.memberInfo}>
-                                    <Text style={[styles.memberName, isCurrentUser && styles.currentUserText]}>
-                                        {member.name} {isCurrentUser && '(You)'}
+                                    <Text variant="titleLarge" style={styles.rankText}>
+                                        {getRankDisplay(rank)}
                                     </Text>
-                                    <Text style={styles.memberEmail}>{member.email}</Text>
-                                </View>
-                                <Text style={styles.pointsText}>{member.totalPoints} pts</Text>
-                            </View>
+                                <View style={styles.memberInfo}>
+                                        <Text
+                                            variant="titleMedium"
+                                            style={[styles.memberName, isCurrentUser && styles.currentUserText]}
+                                        >
+                                        {member.name} {isCurrentUser && '(You)'}
+                                        </Text>
+                                        <Text variant="bodySmall" style={styles.memberEmail}>
+                                            {member.email}
+                                        </Text>
+                                    </View>
+                                    <Text variant="titleLarge" style={styles.pointsText}>
+                                        {member.totalPoints} pts
+                                    </Text>
+                                </Surface>
                         );
                     })}
-                </View>
+                    </Card.Content>
+                </Card>
             </ScrollView>
 
             {/* Edit Group Modal */}
@@ -234,7 +257,6 @@ const styles = StyleSheet.create({
     },
     loadingText: {
         marginTop: 10,
-        fontSize: 16,
         color: '#7f8c8d',
     },
     errorContainer: {
@@ -244,36 +266,18 @@ const styles = StyleSheet.create({
         padding: 20,
     },
     errorText: {
-        fontSize: 18,
         color: '#e74c3c',
         marginBottom: 20,
     },
     retryButton: {
-        backgroundColor: '#4285f4',
-        paddingHorizontal: 30,
-        paddingVertical: 12,
-        borderRadius: 8,
-    },
-    retryButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
+        marginTop: 10,
     },
     scrollView: {
         flex: 1,
     },
     headerCard: {
-        backgroundColor: '#fff',
-        padding: 20,
+        margin: 15,
         marginBottom: 15,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3.84,
-        elevation: 5,
     },
     groupNameRow: {
         flexDirection: 'row',
@@ -282,25 +286,13 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     groupName: {
-        fontSize: 28,
-        fontWeight: 'bold',
         color: '#2c3e50',
         flex: 1,
     },
     editButton: {
-        backgroundColor: '#4285f4',
-        paddingHorizontal: 15,
-        paddingVertical: 8,
-        borderRadius: 6,
         marginLeft: 10,
     },
-    editButtonText: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '600',
-    },
     groupDescription: {
-        fontSize: 16,
         color: '#7f8c8d',
         marginBottom: 15,
         lineHeight: 22,
@@ -310,41 +302,22 @@ const styles = StyleSheet.create({
         marginBottom: 15,
     },
     memberCount: {
-        fontSize: 14,
-        color: '#7f8c8d',
         backgroundColor: '#f8f9fa',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 12,
+        height: 28,
+    },
+    memberCountText: {
+        fontSize: 12,
+        color: '#7f8c8d',
     },
     shareButton: {
-        marginTop: 15,
-        backgroundColor: '#4285f4',
-        paddingVertical: 12,
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    shareButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
+        marginTop: 8,
     },
     leaderboardSection: {
-        backgroundColor: '#fff',
-        padding: 20,
+        margin: 15,
+        marginTop: 0,
         marginBottom: 20,
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3.84,
-        elevation: 5,
     },
     sectionTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
         color: '#2c3e50',
         marginBottom: 15,
     },
@@ -362,8 +335,6 @@ const styles = StyleSheet.create({
         borderColor: '#4285f4',
     },
     rankText: {
-        fontSize: 20,
-        fontWeight: 'bold',
         color: '#2c3e50',
         width: 50,
     },
@@ -372,8 +343,6 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
     },
     memberName: {
-        fontSize: 16,
-        fontWeight: '600',
         color: '#2c3e50',
         marginBottom: 2,
     },
@@ -381,12 +350,9 @@ const styles = StyleSheet.create({
         color: '#4285f4',
     },
     memberEmail: {
-        fontSize: 12,
         color: '#7f8c8d',
     },
     pointsText: {
-        fontSize: 18,
-        fontWeight: 'bold',
         color: '#4285f4',
     },
 });

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
+import { PaperProvider } from 'react-native-paper';
 import * as SecureStore from 'expo-secure-store';
 import * as Linking from 'expo-linking';
 
@@ -9,6 +10,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import GroupTabsScreen from './src/screens/GroupTabsScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { appTheme } from './src/theme/theme';
 
 const Stack = createStackNavigator();
 
@@ -55,9 +57,11 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <StatusBar style="auto" />
-      <AppNavigator />
-    </AuthProvider>
+    <PaperProvider theme={appTheme}>
+      <AuthProvider>
+        <StatusBar style="auto" />
+        <AppNavigator />
+      </AuthProvider>
+    </PaperProvider>
   );
 }

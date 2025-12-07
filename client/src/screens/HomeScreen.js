@@ -1,16 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
-  Text,
-  TouchableOpacity,
   StyleSheet,
   SafeAreaView,
   Alert,
-  ScrollView,
   RefreshControl,
-  ActivityIndicator,
   FlatList
 } from 'react-native';
+import { Text, Button, Card, FAB, ActivityIndicator, Surface, Chip } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { groupService } from '../services/groupService';
 import CreateGroupModal from '../components/CreateGroupModal';
@@ -29,6 +27,7 @@ const getItemAsync = async (key) => {
 
 export default function HomeScreen({ navigation }) {
   const { user, logout } = useAuth();
+  const insets = useSafeAreaInsets();
   const [groups, setGroups] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -121,43 +120,52 @@ export default function HomeScreen({ navigation }) {
   };
 
   const renderGroupCard = ({ item: group }) => (
-    <TouchableOpacity
+    <Card
       style={styles.groupCard}
+      mode="elevated"
+      elevation={2}
       onPress={() => handleGroupPress(group)}
-      activeOpacity={0.7}
     >
+      <Card.Content>
       <View style={styles.groupHeader}>
-        <Text style={styles.groupName}>{group.name}</Text>
-        <Text style={styles.memberCount}>{group.memberCount} members</Text>
+          <Text variant="titleLarge" style={styles.groupName}>{group.name}</Text>
+          <Chip style={styles.memberCount} textStyle={styles.memberCountText}>
+            {group.memberCount} members
+          </Chip>
       </View>
       {group.description && (
-        <Text style={styles.groupDescription}>{group.description}</Text>
+          <Text variant="bodyMedium" style={styles.groupDescription}>{group.description}</Text>
       )}
       <View style={styles.groupFooter}>
-        <Text style={styles.userPoints}>Your score: {group.userPoints} pts</Text>
+          <Text variant="titleMedium" style={styles.userPoints}>
+            Your score: {group.userPoints} pts
+          </Text>
       </View>
-    </TouchableOpacity>
+      </Card.Content>
+    </Card>
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyTitle}>No groups yet!</Text>
-      <Text style={styles.emptySubtitle}>Create one to get started with your friends</Text>
+      <Text variant="headlineLarge" style={styles.emptyTitle}>No groups yet!</Text>
+      <Text variant="bodyLarge" style={styles.emptySubtitle}>
+        Create one to get started with your friends
+      </Text>
     </View>
   );
 
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>My Groups</Text>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
+        <Surface style={styles.header} elevation={1}>
+          <Text variant="headlineLarge" style={styles.title}>My Groups</Text>
+          <Button mode="contained" onPress={handleLogout} buttonColor="#e74c3c" compact>
+            Logout
+          </Button>
+        </Surface>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4285f4" />
-          <Text style={styles.loadingText}>Loading groups...</Text>
+          <ActivityIndicator size="large" />
+          <Text variant="bodyLarge" style={styles.loadingText}>Loading groups...</Text>
         </View>
       </SafeAreaView>
     );
@@ -165,17 +173,28 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>My Groups</Text>
+      <Surface style={styles.header} elevation={1}>
+        <Text variant="headlineLarge" style={styles.title}>My Groups</Text>
         <View style={styles.headerButtons}>
-          <TouchableOpacity onPress={() => setShowJoinModal(true)} style={styles.joinButton}>
-            <Text style={styles.joinButtonText}>Join</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
+          <Button
+            mode="contained"
+            onPress={() => setShowJoinModal(true)}
+            style={styles.joinButton}
+            compact
+          >
+            Join
+          </Button>
+          <Button
+            mode="contained"
+            onPress={handleLogout}
+            buttonColor="#e74c3c"
+            style={styles.logoutButton}
+            compact
+          >
+            Logout
+          </Button>
         </View>
-      </View>
+      </Surface>
 
       <View style={styles.content}>
         {groups.length === 0 ? (
@@ -195,17 +214,19 @@ export default function HomeScreen({ navigation }) {
             }
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.listContainer}
+            keyboardDismissMode="on-drag"
+            keyboardShouldPersistTaps="handled"
+            removeClippedSubviews={true}
           />
         )}
       </View>
 
-      <TouchableOpacity
-        style={styles.fab}
+      <FAB
+        icon="plus"
+        style={[styles.fab, { bottom: insets.bottom + 16 }]}
         onPress={handleCreateGroup}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
+        label="Create"
+      />
 
       <CreateGroupModal
         ref={createModalRef}
@@ -235,37 +256,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 15,
     backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e1e8ed',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
     color: '#2c3e50',
   },
   headerButtons: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   joinButton: {
-    backgroundColor: '#4285f4',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  joinButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+    marginHorizontal: 0,
   },
   logoutButton: {
-    backgroundColor: '#e74c3c',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  logoutText: {
-    color: '#fff',
-    fontWeight: '600',
+    marginHorizontal: 0,
   },
   content: {
     flex: 1,
@@ -277,25 +280,13 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 10,
-    fontSize: 16,
     color: '#7f8c8d',
   },
   listContainer: {
     padding: 20,
   },
   groupCard: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   groupHeader: {
     flexDirection: 'row',
@@ -304,22 +295,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   groupName: {
-    fontSize: 20,
-    fontWeight: 'bold',
     color: '#2c3e50',
     flex: 1,
     marginRight: 10,
   },
   memberCount: {
-    fontSize: 14,
-    color: '#7f8c8d',
     backgroundColor: '#f8f9fa',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    height: 28,
+  },
+  memberCountText: {
+    fontSize: 12,
+    color: '#7f8c8d',
   },
   groupDescription: {
-    fontSize: 16,
     color: '#7f8c8d',
     marginBottom: 12,
     lineHeight: 22,
@@ -328,10 +316,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 8,
   },
   userPoints: {
-    fontSize: 16,
-    fontWeight: '600',
     color: '#4285f4',
   },
   emptyState: {
@@ -341,14 +328,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
     color: '#2c3e50',
     marginBottom: 10,
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 16,
     color: '#7f8c8d',
     textAlign: 'center',
     lineHeight: 22,
@@ -357,27 +341,5 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 30,
     right: 30,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#4285f4',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
-  },
-  fabText: {
-    fontSize: 28,
-    color: '#fff',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    lineHeight: 28,
-    includeFontPadding: false,
   },
 });

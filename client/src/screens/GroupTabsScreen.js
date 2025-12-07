@@ -3,7 +3,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { groupService } from '../services/groupService';
 import LeaderboardScreen from './LeaderboardScreen';
 import EventsScreen from './EventsScreen';
-import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { ActivityIndicator, Text } from 'react-native-paper';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { useGroupRealtime } from '../hooks/useGroupRealtime';
@@ -73,8 +74,8 @@ export default function GroupTabsScreen({ route, navigation }) {
     if (isLoading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#4285f4" />
-                <Text style={styles.loadingText}>Loading...</Text>
+                <ActivityIndicator size="large" />
+                <Text variant="bodyLarge" style={styles.loadingText}>Loading...</Text>
             </View>
         );
     }
@@ -124,7 +125,6 @@ const styles = StyleSheet.create({
     },
     loadingText: {
         marginTop: 10,
-        fontSize: 16,
         color: '#7f8c8d',
     },
 });

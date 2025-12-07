@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
     View,
-    Text,
-    TouchableOpacity,
     StyleSheet,
     SafeAreaView,
     FlatList,
-    ActivityIndicator,
     Alert,
-    RefreshControl
+    RefreshControl,
+    ScrollView
 } from 'react-native';
+import { Text, Chip, FAB, ActivityIndicator, Surface } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { eventService } from '../services/eventService';
 import { useAuth } from '../context/AuthContext';
 import EventCard from '../components/EventCard';
@@ -30,6 +30,7 @@ const getItemAsync = async (key) => {
 export default function EventsScreen({ route, onGroupDataRefresh }) {
     const { groupId, groupData } = route.params;
     const { user } = useAuth();
+    const insets = useSafeAreaInsets();
     const [events, setEvents] = useState([]);
     const [filteredEvents, setFilteredEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -186,21 +187,23 @@ export default function EventsScreen({ route, onGroupDataRefresh }) {
     const renderFilterButton = (filter, label) => {
         const isSelected = selectedFilter === filter;
         return (
-            <TouchableOpacity
-                style={[styles.filterButton, isSelected && styles.filterButtonActive]}
+            <Chip
+                selected={isSelected}
                 onPress={() => setSelectedFilter(filter)}
+                style={[styles.filterChip, isSelected && styles.selectedChip]}
+                selectedColor="#fff"
+                textStyle={isSelected ? styles.selectedChipText : styles.unselectedChipText}
+                mode={isSelected ? 'flat' : 'outlined'}
             >
-                <Text style={[styles.filterButtonText, isSelected && styles.filterButtonTextActive]}>
                     {label}
-                </Text>
-            </TouchableOpacity>
+            </Chip>
         );
     };
 
     const renderEmptyState = () => (
         <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No events yet</Text>
-            <Text style={styles.emptySubtitle}>
+            <Text variant="titleLarge" style={styles.emptyTitle}>No events yet</Text>
+            <Text variant="bodyLarge" style={styles.emptySubtitle}>
                 {selectedFilter === 'all'
                     ? 'Submit an event to get started!'
                     : `No ${selectedFilter} events`}
@@ -212,8 +215,8 @@ export default function EventsScreen({ route, onGroupDataRefresh }) {
         return (
             <SafeAreaView style={styles.container}>
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#4285f4" />
-                    <Text style={styles.loadingText}>Loading events...</Text>
+                    <ActivityIndicator size="large" />
+                    <Text variant="bodyLarge" style={styles.loadingText}>Loading events...</Text>
                 </View>
             </SafeAreaView>
         );
@@ -222,12 +225,19 @@ export default function EventsScreen({ route, onGroupDataRefresh }) {
     return (
         <SafeAreaView style={styles.container}>
             {/* Filters */}
-            <View style={styles.filtersContainer}>
-                {renderFilterButton('all', 'All')}
-                {renderFilterButton('pending', 'Pending')}
-                {renderFilterButton('approved', 'Approved')}
-                {renderFilterButton('vetoed', 'Vetoed')}
-            </View>
+            <Surface style={styles.filtersContainer} elevation={1}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.filtersScrollContent}
+                    style={styles.filtersScrollView}
+                >
+                    {renderFilterButton('all', 'All')}
+                    {renderFilterButton('pending', 'Pending')}
+                    {renderFilterButton('approved', 'Approved')}
+                    {renderFilterButton('vetoed', 'Vetoed')}
+                </ScrollView>
+            </Surface>
 
             {/* Events List */}
             <FlatList
@@ -252,16 +262,18 @@ export default function EventsScreen({ route, onGroupDataRefresh }) {
                 }
                 ListEmptyComponent={renderEmptyState}
                 showsVerticalScrollIndicator={false}
+                keyboardDismissMode="on-drag"
+                keyboardShouldPersistTaps="handled"
+                removeClippedSubviews={true}
             />
 
             {/* Submit Event FAB */}
-            <TouchableOpacity
-                style={styles.fab}
+            <FAB
+                icon="plus"
+                style={[styles.fab, { bottom: insets.bottom + 16 }]}
                 onPress={() => setShowSubmitModal(true)}
-                activeOpacity={0.8}
-            >
-                <Text style={styles.fabText}>+</Text>
-            </TouchableOpacity>
+                label="Submit"
+            />
 
             {/* Submit Event Modal */}
             <SubmitEventModal
@@ -287,33 +299,31 @@ const styles = StyleSheet.create({
     },
     loadingText: {
         marginTop: 10,
-        fontSize: 16,
         color: '#7f8c8d',
     },
     filtersContainer: {
-        flexDirection: 'row',
-        padding: 15,
+        paddingVertical: 15,
         backgroundColor: '#fff',
-        borderBottomWidth: 1,
-        borderBottomColor: '#e1e8ed',
     },
-    filterButton: {
+    filtersScrollView: {
+        flexGrow: 0,
+    },
+    filtersScrollContent: {
         paddingHorizontal: 15,
-        paddingVertical: 8,
-        borderRadius: 20,
-        backgroundColor: '#f8f9fa',
-        marginRight: 10,
+        gap: 10,
     },
-    filterButtonActive: {
+    filterChip: {
+        marginRight: 8,
+    },
+    selectedChip: {
         backgroundColor: '#4285f4',
     },
-    filterButtonText: {
-        fontSize: 14,
-        color: '#7f8c8d',
+    selectedChipText: {
+        color: '#fff',
         fontWeight: '600',
     },
-    filterButtonTextActive: {
-        color: '#fff',
+    unselectedChipText: {
+        color: '#2c3e50',
     },
     listContainer: {
         padding: 15,
@@ -325,40 +335,15 @@ const styles = StyleSheet.create({
         paddingVertical: 60,
     },
     emptyTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
         color: '#2c3e50',
         marginBottom: 8,
     },
     emptySubtitle: {
-        fontSize: 16,
         color: '#7f8c8d',
     },
     fab: {
         position: 'absolute',
         bottom: 30,
         right: 30,
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: '#4285f4',
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.3,
-        shadowRadius: 4.65,
-        elevation: 8,
-    },
-    fabText: {
-        fontSize: 28,
-        color: '#fff',
-        fontWeight: 'bold',
-        textAlign: 'center',
-        lineHeight: 28,
-        includeFontPadding: false,
     },
 });

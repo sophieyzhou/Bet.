@@ -1,17 +1,14 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  TouchableOpacity,
   Alert,
-  ActivityIndicator,
   SafeAreaView,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
   ScrollView
 } from 'react-native';
+import { TextInput, Button, Text, Card, Surface, Divider, ActivityIndicator } from 'react-native-paper';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
 
@@ -108,121 +105,135 @@ export default function LoginScreen() {
         >
           <View style={styles.content}>
             <View style={styles.logoContainer}>
-              <Text style={styles.logo}>Bet</Text>
-              <Text style={styles.tagline}>Your betting companion</Text>
+              <Text variant="displayMedium" style={styles.logo}>Bet</Text>
+              <Text variant="bodyLarge" style={styles.tagline}>Your betting companion</Text>
             </View>
 
-            <View style={styles.loginContainer}>
-              <Text style={styles.welcomeText}>
-                {isSignupMode ? 'Create Account' : 'Welcome Back!'}
-              </Text>
-              <Text style={styles.subtitle}>
-                {isSignupMode ? 'Sign up to get started' : 'Sign in to continue'}
-              </Text>
+            <Card style={styles.card} mode="elevated" elevation={2}>
+              <Card.Content>
+                <Text variant="headlineLarge" style={styles.welcomeText}>
+                  {isSignupMode ? 'Create Account' : 'Welcome Back!'}
+                </Text>
+                <Text variant="bodyLarge" style={styles.subtitle}>
+                  {isSignupMode ? 'Sign up to get started' : 'Sign in to continue'}
+                </Text>
 
-              {/* Email/Password Form */}
-              {isSignupMode && (
-                <TextInput
-                  style={styles.input}
-                  placeholder="Name"
-                  placeholderTextColor="#95a5a6"
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
-                  editable={!isLoading}
-                />
-              )}
-
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#95a5a6"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                editable={!isLoading}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor="#95a5a6"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                editable={!isLoading}
-              />
-
-              {/* Error Message */}
-              {errorMessage ? (
-                <View style={styles.errorContainer}>
-                  <Text style={styles.errorText}>{errorMessage}</Text>
-                  {isGoogleAccountError && (
-                    <View style={styles.googleErrorActions}>
-                      <TouchableOpacity
-                        style={styles.googleErrorButton}
-                        onPress={handleGoogleLogin}
-                        disabled={isLoading}
-                      >
-                        <Text style={styles.googleErrorButtonText}>Sign in with Google</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.setPasswordButton}
-                        onPress={handleSetPassword}
-                        disabled={isLoading}
-                      >
-                        <Text style={styles.setPasswordButtonText}>Set Password</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </View>
-              ) : null}
-
-              {/* Sign Up / Log In Button */}
-              <TouchableOpacity
-                style={[styles.primaryButton, isLoading && styles.disabledButton]}
-                onPress={handleEmailAuth}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.primaryButtonText}>
-                    {isSignupMode ? 'Sign Up' : 'Log In'}
-                  </Text>
+                {/* Email/Password Form */}
+                {isSignupMode && (
+                  <TextInput
+                    label="Name"
+                    value={name}
+                    onChangeText={setName}
+                    mode="outlined"
+                    autoCapitalize="words"
+                    disabled={isLoading}
+                    style={styles.input}
+                    contentStyle={styles.inputContent}
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    textContentType="name"
+                  />
                 )}
-              </TouchableOpacity>
 
-              {/* Toggle between Login/Signup */}
-              <TouchableOpacity 
-                onPress={toggleMode}
-                disabled={isLoading}
-                style={styles.toggleButton}
-              >
-                <Text style={styles.toggleText}>
+                <TextInput
+                  label="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  mode="outlined"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  disabled={isLoading}
+                  style={styles.input}
+                  contentStyle={styles.inputContent}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  textContentType="emailAddress"
+                />
+
+                <TextInput
+                  label="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  mode="outlined"
+                  secureTextEntry
+                  disabled={isLoading}
+                  style={styles.input}
+                  contentStyle={styles.inputContent}
+                  returnKeyType="done"
+                  blurOnSubmit={true}
+                  textContentType={isSignupMode ? "newPassword" : "password"}
+                />
+
+                {/* Error Message */}
+                {errorMessage ? (
+                  <Surface style={styles.errorContainer} elevation={0}>
+                    <Text variant="bodyMedium" style={styles.errorText}>{errorMessage}</Text>
+                    {isGoogleAccountError && (
+                      <View style={styles.googleErrorActions}>
+                        <Button
+                          mode="contained"
+                          onPress={handleGoogleLogin}
+                          disabled={isLoading}
+                          style={styles.googleErrorButton}
+                          compact
+                        >
+                          Sign in with Google
+                        </Button>
+                        <Button
+                          mode="outlined"
+                          onPress={handleSetPassword}
+                          disabled={isLoading}
+                          style={styles.setPasswordButton}
+                          compact
+                        >
+                          Set Password
+                        </Button>
+                      </View>
+                    )}
+                  </Surface>
+                ) : null}
+
+                {/* Sign Up / Log In Button */}
+                <Button
+                  mode="contained"
+                  onPress={handleEmailAuth}
+                  disabled={isLoading}
+                  loading={isLoading}
+                  style={styles.primaryButton}
+                  contentStyle={styles.buttonContent}
+                >
+                  {isSignupMode ? 'Sign Up' : 'Log In'}
+                </Button>
+
+                {/* Toggle between Login/Signup */}
+                <Button
+                  mode="text"
+                  onPress={toggleMode}
+                  disabled={isLoading}
+                  style={styles.toggleButton}
+                  compact
+                >
                   {isSignupMode 
                     ? 'Already have an account? Log In' 
                     : "Don't have an account? Sign Up"}
-                </Text>
-              </TouchableOpacity>
+                </Button>
 
-              {/* Divider */}
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>OR</Text>
-                <View style={styles.dividerLine} />
-              </View>
+                {/* Divider */}
+                <Divider style={styles.divider} />
 
-              {/* Google Button */}
-              <TouchableOpacity
-                style={[styles.googleButton, isLoading && styles.disabledButton]}
-                onPress={handleGoogleLogin}
-                disabled={isLoading}
-              >
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
-              </TouchableOpacity>
-            </View>
+                {/* Google Button */}
+                <Button
+                  mode="contained"
+                  onPress={handleGoogleLogin}
+                  disabled={isLoading}
+                  loading={isLoading}
+                  style={styles.googleButton}
+                  contentStyle={styles.buttonContent}
+                >
+                  Continue with Google
+                </Button>
+              </Card.Content>
+            </Card>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -244,7 +255,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     paddingVertical: 20,
   },
   logoContainer: {
@@ -252,104 +263,59 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   logo: {
-    fontSize: 48,
-    fontWeight: 'bold',
     color: '#2c3e50',
     marginBottom: 10,
   },
   tagline: {
-    fontSize: 16,
     color: '#7f8c8d',
   },
-  loginContainer: {
-    alignItems: 'stretch',
+  card: {
+    marginHorizontal: 10,
   },
   welcomeText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 8,
     textAlign: 'center',
+    marginBottom: 8,
+    color: '#2c3e50',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#7f8c8d',
-    marginBottom: 30,
     textAlign: 'center',
+    marginBottom: 24,
+    color: '#7f8c8d',
   },
   input: {
+    marginBottom: 12,
     backgroundColor: '#fff',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderRadius: 8,
+  },
+  inputContent: {
     fontSize: 16,
-    color: '#2c3e50',
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
   primaryButton: {
-    backgroundColor: '#2c3e50',
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
+    marginTop: 8,
+    marginBottom: 8,
   },
-  primaryButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  buttonContent: {
+    paddingVertical: 6,
   },
   toggleButton: {
-    marginTop: 15,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  toggleText: {
-    color: '#4285f4',
-    fontSize: 14,
-    fontWeight: '500',
+    marginTop: 8,
+    marginBottom: 8,
   },
   divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#e0e0e0',
-  },
-  dividerText: {
-    marginHorizontal: 10,
-    color: '#7f8c8d',
-    fontSize: 14,
+    marginVertical: 16,
   },
   googleButton: {
-    backgroundColor: '#4285f4',
-    paddingVertical: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  googleButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    marginTop: 8,
   },
   errorContainer: {
     backgroundColor: '#ffebee',
     padding: 12,
     borderRadius: 8,
-    marginBottom: 15,
+    marginBottom: 16,
     borderLeftWidth: 4,
     borderLeftColor: '#e53935',
   },
   errorText: {
     color: '#c62828',
-    fontSize: 14,
     marginBottom: 8,
   },
   googleErrorActions: {
@@ -359,28 +325,8 @@ const styles = StyleSheet.create({
   },
   googleErrorButton: {
     flex: 1,
-    backgroundColor: '#4285f4',
-    paddingVertical: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  googleErrorButtonText: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: '600',
   },
   setPasswordButton: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingVertical: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#4285f4',
-  },
-  setPasswordButtonText: {
-    color: '#4285f4',
-    fontSize: 13,
-    fontWeight: '600',
   },
 });

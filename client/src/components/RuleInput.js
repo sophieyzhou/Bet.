@@ -1,29 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import {
     View,
-    Text,
-    TextInput,
-    TouchableOpacity,
     StyleSheet,
     Alert
 } from 'react-native';
+import { TextInput, Button, Text, Surface } from 'react-native-paper';
 
 export default function RuleInput({ onAddRule, onCancel, initialRule = null }) {
     const [description, setDescription] = useState('');
     const [points, setPoints] = useState('');
-    const [vetoThreshold, setVetoThreshold] = useState('0');
+    const [vetoThreshold, setVetoThreshold] = useState('1');
 
     // Populate form when editing an existing rule
     useEffect(() => {
         if (initialRule) {
             setDescription(initialRule.description || '');
             setPoints(initialRule.points?.toString() || '');
-            setVetoThreshold(initialRule.vetoThreshold?.toString() || '0');
+            setVetoThreshold(initialRule.vetoThreshold?.toString() || '1');
         } else {
             // Reset form when not editing
             setDescription('');
             setPoints('');
-            setVetoThreshold('0');
+            setVetoThreshold('1');
         }
     }, [initialRule]);
 
@@ -74,47 +72,73 @@ export default function RuleInput({ onAddRule, onCancel, initialRule = null }) {
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.label}>Rule Description *</Text>
+        <Surface style={styles.container} elevation={0}>
             <TextInput
-                style={styles.input}
-                placeholder="e.g., Complete a workout"
+                label="Rule Description *"
                 value={description}
                 onChangeText={setDescription}
+                mode="outlined"
                 maxLength={100}
+                placeholder="e.g., Run a mile"
+                style={styles.input}
+                returnKeyType="next"
+                blurOnSubmit={false}
+                textContentType="none"
             />
 
-            <Text style={styles.label}>Points *</Text>
             <TextInput
-                style={styles.input}
-                placeholder="e.g., 10 or -5"
+                label="Points *"
                 value={points}
                 onChangeText={setPoints}
+                mode="outlined"
                 keyboardType="numeric"
-            />
-            <Text style={styles.hint}>Can be negative for penalties</Text>
-
-            <Text style={styles.label}>Veto Threshold *</Text>
-            <TextInput
+                placeholder="e.g., 10 or -5"
                 style={styles.input}
-                placeholder="0"
+                returnKeyType="next"
+                blurOnSubmit={false}
+                textContentType="none"
+            />
+            <Text variant="bodySmall" style={styles.hint}>
+                Can be negative for penalties
+            </Text>
+
+            <TextInput
+                label="Veto Threshold *"
                 value={vetoThreshold}
                 onChangeText={setVetoThreshold}
-                keyboardType="numeric"
+                mode="outlined"
+                keyboardType="number-pad"
+                placeholder="1"
+                style={styles.input}
+                textContentType="none"
             />
-            <Text style={styles.hint}>Number of votes needed to veto</Text>
+            <Text variant="bodySmall" style={styles.hint}>
+                Number of votes needed to veto
+            </Text>
 
             <View style={styles.buttonRow}>
-                <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
-                    <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-                    <Text style={styles.addButtonText}>
+                <Button
+                    mode="outlined"
+                    onPress={onCancel}
+                    style={styles.cancelButton}
+                    textColor="#4285f4"
+                    labelStyle={styles.buttonLabel}
+                    contentStyle={styles.buttonContent}
+                >
+                    Cancel
+                </Button>
+                <Button
+                    mode="contained"
+                    onPress={handleAdd}
+                    style={styles.addButton}
+                    textColor="#ffffff"
+                    labelStyle={styles.buttonLabel}
+                    contentStyle={styles.buttonContent}
+                >
                         {initialRule ? 'Update Rule' : 'Add Rule'}
-                    </Text>
-                </TouchableOpacity>
+                </Button>
             </View>
-        </View>
+        </Surface>
     );
 }
 
@@ -125,56 +149,34 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         marginBottom: 15,
     },
-    label: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#2c3e50',
-        marginBottom: 5,
-        marginTop: 10,
-    },
     input: {
+        marginBottom: 12,
         backgroundColor: '#fff',
-        borderWidth: 1,
-        borderColor: '#e1e8ed',
-        borderRadius: 6,
-        padding: 12,
-        fontSize: 16,
-        color: '#2c3e50',
     },
     hint: {
-        fontSize: 12,
         color: '#7f8c8d',
-        marginTop: 4,
-        marginBottom: 5,
+        marginTop: -8,
+        marginBottom: 8,
+        marginLeft: 4,
     },
     buttonRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginTop: 15,
+        gap: 10,
     },
     cancelButton: {
         flex: 1,
-        backgroundColor: '#e1e8ed',
-        paddingVertical: 12,
-        borderRadius: 6,
-        marginRight: 10,
-        alignItems: 'center',
-    },
-    cancelButtonText: {
-        color: '#7f8c8d',
-        fontSize: 16,
-        fontWeight: '600',
     },
     addButton: {
         flex: 1,
-        backgroundColor: '#4285f4',
-        paddingVertical: 12,
-        borderRadius: 6,
-        alignItems: 'center',
     },
-    addButtonText: {
-        color: '#fff',
+    buttonLabel: {
         fontSize: 16,
         fontWeight: '600',
+    },
+    buttonContent: {
+        minHeight: 44,
+        paddingHorizontal: 12,
     },
 });

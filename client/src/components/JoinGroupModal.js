@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
     View,
-    Text,
-    TextInput,
-    TouchableOpacity,
     StyleSheet,
-    Modal,
-    ActivityIndicator
+    Clipboard,
+    KeyboardAvoidingView,
+    Platform,
+    Dimensions
 } from 'react-native';
+import { Dialog, TextInput, Button, Text, Portal } from 'react-native-paper';
+
+const screenHeight = Dimensions.get('window').height;
 
 export default function JoinGroupModal({ visible, onClose, onJoinSuccess }) {
     const [joinCode, setJoinCode] = useState('');
@@ -69,160 +71,146 @@ export default function JoinGroupModal({ visible, onClose, onJoinSuccess }) {
     }, [visible]);
 
     return (
-        <Modal
-            visible={visible}
-            animationType="slide"
-            transparent={true}
-            onRequestClose={handleCancel}
-        >
-            <View style={styles.modalOverlay}>
-                <View style={styles.modalContent}>
-                    <Text style={styles.modalTitle}>Join Group</Text>
+        <Portal>
+            <Dialog visible={visible} onDismiss={handleCancel} style={{ maxHeight: screenHeight * 0.9 }}>
+                <Dialog.Title>Join Group</Dialog.Title>
+                {Platform.OS !== 'web' ? (
+                    <KeyboardAvoidingView
+                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+                        style={styles.keyboardView}
+                    >
+                        <Dialog.Content style={styles.dialogContent}>
+                            <Text variant="bodyMedium" style={styles.helperText}>
+                                Enter the 6-digit group code
+                            </Text>
 
-                    <Text style={styles.helperText}>Enter the 6-digit group code</Text>
+                            <TextInput
+                                label="Join Code"
+                                value={joinCode}
+                                onChangeText={handleCodeChange}
+                                mode="outlined"
+                                autoCapitalize="characters"
+                                maxLength={6}
+                                disabled={isLoading}
+                                autoFocus
+                                error={joinCode.length > 0 && joinCode.length !== 6}
+                                style={styles.input}
+                                contentStyle={styles.inputContent}
+                                returnKeyType="done"
+                                blurOnSubmit={true}
+                                textContentType="none"
+                                keyboardType="default"
+                            />
+                            {joinCode.length > 0 && joinCode.length !== 6 && (
+                                <Text variant="bodySmall" style={styles.errorText}>
+                                    Code must be exactly 6 characters
+                                </Text>
+                            )}
+                            {errorMessage && (
+                                <View style={styles.errorContainer}>
+                                    <Text variant="bodySmall" style={styles.errorMessageText}>
+                                        {errorMessage}
+                                    </Text>
+                                </View>
+                            )}
+                        </Dialog.Content>
+                    </KeyboardAvoidingView>
+                ) : (
+                    <Dialog.Content style={styles.dialogContent}>
+                        <Text variant="bodyMedium" style={styles.helperText}>
+                            Enter the 6-digit group code
+                        </Text>
 
-                    <TextInput
-                        style={[styles.input, joinCode.length > 0 && joinCode.length !== 6 && styles.inputError]}
-                        placeholder="Enter code"
-                        placeholderTextColor="#bdc3c7"
-                        value={joinCode}
-                        onChangeText={handleCodeChange}
-                        autoCapitalize="characters"
-                        maxLength={6}
-                        editable={!isLoading}
-                        autoFocus
-                    />
-                    {joinCode.length > 0 && joinCode.length !== 6 && (
-                        <Text style={styles.errorText}>Code must be exactly 6 characters</Text>
-                    )}
-                    {errorMessage && (
-                        <View style={styles.errorContainer}>
-                            <Text style={styles.errorMessageText}>{errorMessage}</Text>
-                        </View>
-                    )}
-
-                    <View style={styles.buttonRow}>
-                        <TouchableOpacity
-                            style={styles.cancelButton}
-                            onPress={handleCancel}
+                        <TextInput
+                            label="Join Code"
+                            value={joinCode}
+                            onChangeText={handleCodeChange}
+                            mode="outlined"
+                            autoCapitalize="characters"
+                            maxLength={6}
                             disabled={isLoading}
-                        >
-                            <Text style={styles.cancelButtonText}>Cancel</Text>
-                        </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.joinButton, (isLoading || joinCode.length !== 6) && styles.disabledButton]}
+                            autoFocus
+                            error={joinCode.length > 0 && joinCode.length !== 6}
+                            style={styles.input}
+                            contentStyle={styles.inputContent}
+                            returnKeyType="done"
+                            blurOnSubmit={true}
+                            textContentType="none"
+                            keyboardType="default"
+                        />
+                        {joinCode.length > 0 && joinCode.length !== 6 && (
+                            <Text variant="bodySmall" style={styles.errorText}>
+                                Code must be exactly 6 characters
+                            </Text>
+                        )}
+                        {errorMessage && (
+                            <View style={styles.errorContainer}>
+                                <Text variant="bodySmall" style={styles.errorMessageText}>
+                                    {errorMessage}
+                                </Text>
+                            </View>
+                        )}
+                    </Dialog.Content>
+                )}
+                <Dialog.Actions>
+                    <Button onPress={handleCancel} disabled={isLoading}>Cancel</Button>
+                    <Button
+                        mode="contained"
                         onPress={handleJoin}
                         disabled={isLoading || joinCode.length !== 6}
+                        loading={isLoading}
                     >
-                        {isLoading ? (
-                            <ActivityIndicator color="#fff" />
-                        ) : (
-                            <Text style={styles.joinButtonText}>Join</Text>
-                        )}
-                    </TouchableOpacity>
-                    </View>
-                </View>
-            </View>
-        </Modal>
+                        Join
+                    </Button>
+                </Dialog.Actions>
+            </Dialog>
+        </Portal>
     );
 }
 
 const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
+    keyboardView: {
+        flexShrink: 1,
     },
-    modalContent: {
-        backgroundColor: '#fff',
-        borderRadius: 15,
-        padding: 25,
-        width: '100%',
-        maxWidth: 400,
-    },
-    modalTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#2c3e50',
-        marginBottom: 10,
-        textAlign: 'center',
+    dialogContent: {
+        paddingHorizontal: 24,
+        paddingVertical: 16,
+        minHeight: 100,
     },
     helperText: {
-        fontSize: 14,
-        color: '#7f8c8d',
         textAlign: 'center',
         marginBottom: 20,
+        color: '#7f8c8d',
     },
     input: {
-        backgroundColor: '#f8f9fa',
-        borderWidth: 1,
-        borderColor: '#e1e8ed',
-        borderRadius: 8,
-        padding: 15,
+        marginTop: 10,
+        marginBottom: 10,
+    },
+    inputContent: {
         fontSize: 24,
-        color: '#2c3e50',
         textAlign: 'center',
         fontWeight: 'bold',
         letterSpacing: 5,
-        fontFamily: 'monospace',
-        marginBottom: 20,
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    cancelButton: {
-        flex: 1,
-        backgroundColor: '#e1e8ed',
-        paddingVertical: 15,
-        borderRadius: 8,
-        alignItems: 'center',
-        marginRight: 10,
-    },
-    cancelButtonText: {
-        color: '#7f8c8d',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    joinButton: {
-        flex: 1,
-        backgroundColor: '#4285f4',
-        paddingVertical: 15,
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    joinButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    disabledButton: {
-        opacity: 0.6,
-    },
-    inputError: {
-        borderColor: '#e74c3c',
+        fontFamily: Platform.OS === 'ios' ? 'Courier' : Platform.OS === 'web' ? 'monospace' : 'monospace',
     },
     errorText: {
         color: '#e74c3c',
-        fontSize: 12,
-        marginTop: -15,
+        marginTop: -10,
         marginBottom: 10,
         textAlign: 'center',
     },
     errorContainer: {
-        backgroundColor: '#fee',
+        backgroundColor: '#ffebee',
         borderWidth: 1,
         borderColor: '#e74c3c',
         borderRadius: 8,
         padding: 12,
-        marginBottom: 15,
+        marginTop: 10,
+        marginBottom: 10,
     },
     errorMessageText: {
         color: '#e74c3c',
-        fontSize: 14,
         textAlign: 'center',
-        fontWeight: '500',
     },
 });
