@@ -210,12 +210,8 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
                                         onChangeText={setDescription}
                                         mode="outlined"
                                         maxLength={200}
-                                        multiline
-                                        numberOfLines={3}
                                         disabled={isLoading}
                                         style={styles.input}
-                                        contentStyle={styles.multilineContent}
-                                        textAlignVertical="top"
                                         returnKeyType="done"
                                         textContentType="none"
                                     />
@@ -327,12 +323,8 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
                                     onChangeText={setDescription}
                                     mode="outlined"
                                     maxLength={200}
-                                    multiline
-                                    numberOfLines={3}
                                     disabled={isLoading}
                                     style={styles.input}
-                                    contentStyle={styles.multilineContent}
-                                    textAlignVertical="top"
                                     returnKeyType="done"
                                     textContentType="none"
                                 />

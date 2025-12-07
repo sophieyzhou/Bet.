@@ -215,12 +215,8 @@ export default function SubmitEventModal({ visible, onClose, members, rules, onS
                                 value={description}
                                 onChangeText={setDescription}
                                 mode="outlined"
-                                multiline
-                                numberOfLines={4}
                                 disabled={isLoading}
                                 style={styles.input}
-                                contentStyle={styles.multilineContent}
-                                textAlignVertical="top"
                                 returnKeyType="done"
                                 textContentType="none"
                             />
@@ -344,12 +340,8 @@ export default function SubmitEventModal({ visible, onClose, members, rules, onS
                                     value={description}
                                     onChangeText={setDescription}
                                     mode="outlined"
-                                    multiline
-                                    numberOfLines={4}
                                     disabled={isLoading}
                                     style={styles.input}
-                                    contentStyle={styles.multilineContent}
-                                    textAlignVertical="top"
                                     returnKeyType="done"
                                     textContentType="none"
                                 />

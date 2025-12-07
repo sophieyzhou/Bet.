@@ -124,6 +124,7 @@ export default function RuleInput({ onAddRule, onCancel, initialRule = null }) {
                     textColor="#4285f4"
                     labelStyle={styles.buttonLabel}
                     contentStyle={styles.buttonContent}
+                    compact
                 >
                     Cancel
                 </Button>
@@ -134,8 +135,9 @@ export default function RuleInput({ onAddRule, onCancel, initialRule = null }) {
                     textColor="#ffffff"
                     labelStyle={styles.buttonLabel}
                     contentStyle={styles.buttonContent}
+                    compact
                 >
-                        {initialRule ? 'Update Rule' : 'Add Rule'}
+                        {initialRule ? 'Update' : 'Add'}
                 </Button>
             </View>
         </Surface>
@@ -172,11 +174,11 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     buttonLabel: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: '600',
     },
     buttonContent: {
-        minHeight: 44,
-        paddingHorizontal: 12,
+        minHeight: 40,
+        paddingHorizontal: 6,
     },
 });
