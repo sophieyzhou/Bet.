@@ -1,16 +1,23 @@
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
-import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
+const APP_SCHEME = 'bet';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export const authService = {
   async loginWithGoogle() {
     try {
-      const redirectUri = AuthSession.makeRedirectUri({ useProxy: true });
+      const isExpoGo = Constants.appOwnership === 'expo';
+      const redirectUri = AuthSession.makeRedirectUri({
+        scheme: APP_SCHEME,
+        useProxy: isExpoGo
+      });
+
       const authUrl = `${API_BASE_URL}/auth/google?redirect_uri=${encodeURIComponent(redirectUri)}`;
 
       // Use the modern WebBrowser.openAuthSessionAsync method
