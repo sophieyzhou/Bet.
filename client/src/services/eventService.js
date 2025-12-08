@@ -1,11 +1,11 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
-
-const API_BASE_URL = 'http://localhost:3001/api';
+import { getApiBaseUrl } from './config';
 
 export const eventService = {
     async getGroupEvents(groupId, token, status = null) {
         try {
+            const API_BASE_URL = getApiBaseUrl();
             let url = `${API_BASE_URL}/events/group/${groupId}`;
             if (status) {
                 url += `?status=${status}`;
@@ -57,6 +57,7 @@ export const eventService = {
                     });
                 }
 
+                const API_BASE_URL = getApiBaseUrl();
                 response = await axios.post(
                     `${API_BASE_URL}/events/create`,
                     formData,
@@ -69,6 +70,7 @@ export const eventService = {
                 );
             } else {
                 // No media, use regular JSON
+                const API_BASE_URL = getApiBaseUrl();
                 response = await axios.post(
                     `${API_BASE_URL}/events/create`,
                     { groupId, ...eventData },
@@ -93,6 +95,7 @@ export const eventService = {
 
     async voteToVeto(eventId, token) {
         try {
+            const API_BASE_URL = getApiBaseUrl();
             const response = await axios.post(
                 `${API_BASE_URL}/events/${eventId}/vote`,
                 {},
@@ -116,6 +119,7 @@ export const eventService = {
         console.log('=== eventService.deleteEvent called ===');
         console.log('EventId:', eventId);
         console.log('Token exists:', !!token);
+        const API_BASE_URL = getApiBaseUrl();
         console.log('API URL:', `${API_BASE_URL}/events/${eventId}`);
         
         try {

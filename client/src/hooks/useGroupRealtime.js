@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { socketService } from '../services/socketService';
@@ -17,6 +17,23 @@ export const useGroupRealtime = ({
   onEventUpdate,
   onEventDelete
 }) => {
+  // Keep latest handlers without retriggering socket lifecycle
+  const handlersRef = useRef({
+    onGroupUpdate,
+    onEventNew,
+    onEventUpdate,
+    onEventDelete
+  });
+
+  useEffect(() => {
+    handlersRef.current = {
+      onGroupUpdate,
+      onEventNew,
+      onEventUpdate,
+      onEventDelete
+    };
+  }, [onGroupUpdate, onEventNew, onEventUpdate, onEventDelete]);
+
   useEffect(() => {
     if (!groupId) {
       return () => undefined;
@@ -66,47 +83,38 @@ export const useGroupRealtime = ({
         const normalizedGroupId = String(groupId);
         console.log('[realtime] Socket verified and ready, setting up handlers for groupId:', normalizedGroupId);
 
-        // Set up event handlers FIRST, before joining room
-        // This ensures handlers are ready to receive messages as soon as we join
-        if (onGroupUpdate) {
-          const handler = (payload) => {
-            console.log('[realtime] Received group:update for groupId:', payload?._id);
-            onGroupUpdate(payload);
-          };
-          activeSocket.on('group:update', handler);
-          unsubscribers.push(() => activeSocket.off('group:update', handler));
-          console.log('[realtime] Registered group:update handler');
-        }
+        // Stable handlers that reference latest callbacks
+        const groupUpdateHandler = (payload) => {
+          console.log('[realtime] Received group:update for groupId:', payload?._id);
+          handlersRef.current.onGroupUpdate?.(payload);
+        };
+        activeSocket.on('group:update', groupUpdateHandler);
+        unsubscribers.push(() => activeSocket.off('group:update', groupUpdateHandler));
+        console.log('[realtime] Registered group:update handler');
 
-        if (onEventNew) {
-          const handler = (payload) => {
-            console.log('[realtime] Received events:new - eventId:', payload?._id);
-            onEventNew(payload);
-          };
-          activeSocket.on('events:new', handler);
-          unsubscribers.push(() => activeSocket.off('events:new', handler));
-          console.log('[realtime] Registered events:new handler');
-        }
+        const eventNewHandler = (payload) => {
+          console.log('[realtime] Received events:new - eventId:', payload?._id);
+          handlersRef.current.onEventNew?.(payload);
+        };
+        activeSocket.on('events:new', eventNewHandler);
+        unsubscribers.push(() => activeSocket.off('events:new', eventNewHandler));
+        console.log('[realtime] Registered events:new handler');
 
-        if (onEventUpdate) {
-          const handler = (payload) => {
-            console.log('[realtime] Received events:update - eventId:', payload?._id, 'vetoCount:', payload?.vetoCount);
-            onEventUpdate(payload);
-          };
-          activeSocket.on('events:update', handler);
-          unsubscribers.push(() => activeSocket.off('events:update', handler));
-          console.log('[realtime] Registered events:update handler');
-        }
+        const eventUpdateHandler = (payload) => {
+          console.log('[realtime] Received events:update - eventId:', payload?._id, 'vetoCount:', payload?.vetoCount);
+          handlersRef.current.onEventUpdate?.(payload);
+        };
+        activeSocket.on('events:update', eventUpdateHandler);
+        unsubscribers.push(() => activeSocket.off('events:update', eventUpdateHandler));
+        console.log('[realtime] Registered events:update handler');
 
-        if (onEventDelete) {
-          const handler = (payload) => {
-            console.log('[realtime] Received events:delete - eventId:', payload?.eventId || payload?._id);
-            onEventDelete(payload);
-          };
-          activeSocket.on('events:delete', handler);
-          unsubscribers.push(() => activeSocket.off('events:delete', handler));
-          console.log('[realtime] Registered events:delete handler');
-        }
+        const eventDeleteHandler = (payload) => {
+          console.log('[realtime] Received events:delete - eventId:', payload?.eventId || payload?._id);
+          handlersRef.current.onEventDelete?.(payload);
+        };
+        activeSocket.on('events:delete', eventDeleteHandler);
+        unsubscribers.push(() => activeSocket.off('events:delete', eventDeleteHandler));
+        console.log('[realtime] Registered events:delete handler');
 
         // NOW join the room after handlers are set up
         console.log('[realtime] Handlers registered, joining group:', normalizedGroupId);
@@ -137,7 +145,7 @@ export const useGroupRealtime = ({
         socketService.leaveGroup(normalizedGroupId);
       }
     };
-  }, [groupId, onGroupUpdate, onEventNew, onEventUpdate, onEventDelete]);
+  }, [groupId]);
 };
 
 

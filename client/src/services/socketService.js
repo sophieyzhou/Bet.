@@ -1,6 +1,5 @@
 import { io } from 'socket.io-client';
-
-const SOCKET_BASE_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://localhost:3001';
+import { getSocketBaseUrl } from './config';
 
 let socket = null;
 let connectPromise = null;
@@ -8,6 +7,7 @@ let connectPromise = null;
 const getSocket = () => socket;
 
 const createSocket = (token) => {
+  const SOCKET_BASE_URL = getSocketBaseUrl();
   socket = io(SOCKET_BASE_URL, {
     transports: ['websocket'],
     autoConnect: false,

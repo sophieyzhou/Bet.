@@ -30,6 +30,16 @@ function getRoomSize(roomName) {
   return room ? room.size : 0;
 }
 
+function getRoomMembers(roomName) {
+  if (!io) return [];
+  const room = io.sockets?.adapter?.rooms?.get(roomName);
+  if (!room) return [];
+  return Array.from(room).map((socketId) => {
+    const socket = io.sockets?.sockets?.get(socketId);
+    return { socketId, userId: socket?.data?.userId };
+  });
+}
+
 function initializeRealtime(httpServer, { origins = [] } = {}) {
   if (io) {
     return io;
@@ -102,6 +112,7 @@ function emitToGroup(groupIdRaw, eventName, payload) {
     eventName,
     groupId,
     roomSize: getRoomSize(groupId),
+    members: getRoomMembers(groupId),
     payload: summarizePayload(payload)
   });
 }
