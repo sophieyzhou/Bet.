@@ -297,48 +297,46 @@ const EventCard = ({ event, currentUserId, onVoteToVeto, onDelete }) => {
                     </Dialog.Actions>
                 </Dialog>
 
-                {/* Fullscreen Media Dialog */}
-            {hasMedia && (
-                    <Dialog
-                    visible={showMediaModal}
-                        onDismiss={() => setShowMediaModal(false)}
-                        style={[styles.fullscreenDialog, { maxHeight: Dimensions.get('window').height }]}
-                >
-                        <Dialog.Actions style={styles.fullscreenDialogActions}>
-                            <IconButton
-                                icon="close"
-                                size={24}
-                                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
-                                onPress={() => setShowMediaModal(false)}
-                                iconColor="#fff"
-                            style={styles.fullscreenCloseButton}
-                            />
-                        </Dialog.Actions>
-                        <Dialog.ScrollArea>
-                        <ScrollView
-                            contentContainerStyle={styles.fullscreenScrollContent}
-                            maximumZoomScale={3}
-                            minimumZoomScale={1}
+                {/* Fullscreen Media Overlay */}
+            {hasMedia && showMediaModal && (
+                <View style={styles.fullscreenOverlay}>
+                            <View style={styles.fullscreenCloseContainer}>
+                                <IconButton
+                                    icon="close"
+                                    size={26}
+                                    hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                                    onPress={() => setShowMediaModal(false)}
+                                    iconColor="#fff"
+                                    style={styles.fullscreenCloseButton}
+                                />
+                            </View>
+                            <ScrollView
+                                style={styles.fullscreenScroll}
+                                contentContainerStyle={styles.fullscreenScrollContent}
+                                maximumZoomScale={4}
+                                minimumZoomScale={1}
+                                centerContent
+                                showsVerticalScrollIndicator={false}
+                                showsHorizontalScrollIndicator={false}
                                 keyboardShouldPersistTaps="handled"
-                        >
-                            {media.type === 'image' ? (
-                                <Image
-                                    source={{ uri: getMediaUri() }}
-                                    style={styles.fullscreenImage}
-                                    resizeMode="contain"
-                                />
-                            ) : (
-                                <Video
-                                    source={{ uri: getMediaUri() }}
-                                    style={styles.fullscreenVideo}
-                                    resizeMode="contain"
-                                    useNativeControls
-                                    shouldPlay
-                                />
-                            )}
-                        </ScrollView>
-                        </Dialog.ScrollArea>
-                    </Dialog>
+                            >
+                                {media.type === 'image' ? (
+                                    <Image
+                                        source={{ uri: getMediaUri() }}
+                                        style={styles.fullscreenImage}
+                                        resizeMode="contain"
+                                    />
+                                ) : (
+                                    <Video
+                                        source={{ uri: getMediaUri() }}
+                                        style={styles.fullscreenVideo}
+                                        resizeMode="contain"
+                                        useNativeControls
+                                        shouldPlay
+                                    />
+                                )}
+                            </ScrollView>
+                        </View>
             )}
             </Portal>
         </Card>
@@ -459,34 +457,40 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 200,
     },
-    fullscreenDialog: {
+    fullscreenOverlay: {
+        ...StyleSheet.absoluteFillObject,
         backgroundColor: '#000',
-        margin: 0,
-        maxHeight: '100%',
+        zIndex: 999,
+        paddingTop: 40,
+        paddingHorizontal: 12,
+        paddingBottom: 24,
     },
-    fullscreenDialogActions: {
+    fullscreenCloseContainer: {
         position: 'absolute',
-        top: 0,
-        right: 0,
-        zIndex: 10,
-        backgroundColor: 'transparent',
+        top: 30,
+        right: 8,
+        zIndex: 1000,
     },
     fullscreenCloseButton: {
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    },
+    fullscreenScroll: {
+        flex: 1,
     },
     fullscreenScrollContent: {
-        flex: 1,
+        flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        minHeight: Dimensions.get('window').height * 0.8,
+        paddingTop: 20,
+        paddingBottom: 20,
     },
     fullscreenImage: {
-        width: Dimensions.get('window').width,
-        height: Dimensions.get('window').height * 0.8,
+        width: Dimensions.get('window').width - 24,
+        height: Dimensions.get('window').height - 120,
     },
     fullscreenVideo: {
-        width: Dimensions.get('window').width,
-        height: Dimensions.get('window').height * 0.7,
+        width: Dimensions.get('window').width - 24,
+        height: Dimensions.get('window').height - 160,
     },
 });
 
