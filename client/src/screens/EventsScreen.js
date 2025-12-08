@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
     StyleSheet,
@@ -47,25 +47,25 @@ export default function EventsScreen({ route, onGroupDataRefresh }) {
     }, [events, selectedFilter]);
 
     // Realtime event handlers
-    const handleEventNew = (payload) => {
+    const handleEventNew = useCallback((payload) => {
         setEvents(prev => (
             prev.some(e => e._id === payload._id) ? prev : [payload, ...prev]
         ));
-    };
+    }, []);
 
-    const handleEventUpdate = (payload) => {
+    const handleEventUpdate = useCallback((payload) => {
         setEvents(prev => prev.map(e => (
             e._id === payload._id
                 ? { ...e, status: payload.status, votes: payload.votes, vetoCount: payload.vetoCount }
                 : e
         )));
-    };
+    }, []);
 
-    const handleEventDelete = (payload) => {
+    const handleEventDelete = useCallback((payload) => {
         const id = payload?.eventId || payload?._id;
         if (!id) return;
         setEvents(prev => prev.filter(e => e._id !== id));
-    };
+    }, []);
 
     // Subscribe to realtime group events
     useGroupRealtime({

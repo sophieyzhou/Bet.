@@ -62,13 +62,15 @@ export default function GroupTabsScreen({ route, navigation }) {
         }
     }, [groupId, navigation]);
 
+    const handleGroupUpdate = useCallback((g) => {
+        setGroupData(g);
+        navigation.setOptions({ title: g.name });
+    }, [navigation]);
+
     // Realtime updates for group data and title
     useGroupRealtime({
         groupId,
-        onGroupUpdate: (g) => {
-            setGroupData(g);
-            navigation.setOptions({ title: g.name });
-        },
+        onGroupUpdate: handleGroupUpdate,
     });
 
     if (isLoading) {
