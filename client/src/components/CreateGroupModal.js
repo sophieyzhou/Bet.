@@ -57,6 +57,9 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
             newRules[editingRuleIndex] = rule;
             setRules(newRules);
             setEditingRuleIndex(null);
+
+            // Show success message for rule update
+            Alert.alert('Success', 'Rule updated successfully');
         } else {
             // Adding new rule
             if (rules.length >= 20) {
@@ -264,26 +267,18 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
                                     </Card>
                                 ))}
 
-                                {showRuleInput ? (
-                                    <RuleInput
-                                        onAddRule={handleAddRule}
-                                        onCancel={handleCancelRuleInput}
-                                        initialRule={editingRuleIndex !== null ? rules[editingRuleIndex] : null}
-                                    />
-                                ) : (
-                                    <Button
-                                        mode="outlined"
-                                        onPress={() => {
-                                            setShowRuleInput(true);
-                                            setRulesError(null);
-                                        }}
-                                        disabled={isLoading || rules.length >= 20}
-                                        style={styles.addRuleButton}
-                                        icon="plus"
-                                    >
-                                        Add Rule
-                                    </Button>
-                                )}
+                                <Button
+                                    mode="outlined"
+                                    onPress={() => {
+                                        setShowRuleInput(true);
+                                        setRulesError(null);
+                                    }}
+                                    disabled={isLoading || rules.length >= 20}
+                                    style={styles.addRuleButton}
+                                    icon="plus"
+                                >
+                                    Add Rule
+                                </Button>
 
                                 {rulesError && (
                                     <Text variant="bodySmall" style={styles.errorText}>{rulesError}</Text>
@@ -377,26 +372,18 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
                                     </Card>
                                 ))}
 
-                                {showRuleInput ? (
-                                    <RuleInput
-                                        onAddRule={handleAddRule}
-                                        onCancel={handleCancelRuleInput}
-                                        initialRule={editingRuleIndex !== null ? rules[editingRuleIndex] : null}
-                                    />
-                                ) : (
-                                    <Button
-                                        mode="outlined"
-                                        onPress={() => {
-                                            setShowRuleInput(true);
-                                            setRulesError(null);
-                                        }}
-                                        disabled={isLoading || rules.length >= 20}
-                                        style={styles.addRuleButton}
-                                        icon="plus"
-                                    >
-                                        Add Rule
-                                    </Button>
-                                )}
+                                <Button
+                                    mode="outlined"
+                                    onPress={() => {
+                                        setShowRuleInput(true);
+                                        setRulesError(null);
+                                    }}
+                                    disabled={isLoading || rules.length >= 20}
+                                    style={styles.addRuleButton}
+                                    icon="plus"
+                                >
+                                    Add Rule
+                                </Button>
 
                                 {rulesError && (
                                     <Text variant="bodySmall" style={styles.errorText}>{rulesError}</Text>
@@ -417,6 +404,21 @@ export default function CreateGroupModal({ visible, onClose, onCreateSuccess, ed
                         {editMode ? 'Update Group' : 'Create Group'}
                     </Button>
                 </Dialog.Actions>
+            </Dialog>
+
+            {/* Rule editor dialog */}
+            <Dialog
+                visible={showRuleInput}
+                onDismiss={handleCancelRuleInput}
+            >
+                <Dialog.Title>{editingRuleIndex !== null ? 'Edit Rule' : 'Add Rule'}</Dialog.Title>
+                <Dialog.Content>
+                    <RuleInput
+                        onAddRule={handleAddRule}
+                        onCancel={handleCancelRuleInput}
+                        initialRule={editingRuleIndex !== null ? rules[editingRuleIndex] : null}
+                    />
+                </Dialog.Content>
             </Dialog>
 
             {/* Success Dialog */}
