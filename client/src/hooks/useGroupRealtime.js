@@ -110,13 +110,23 @@ export const useGroupRealtime = ({
 
         // NOW join the room after handlers are set up
         console.log('[realtime] Handlers registered, joining group:', normalizedGroupId);
-        socketService.joinGroup(normalizedGroupId);
+        try {
+          const joinResult = await socketService.joinGroup(normalizedGroupId);
+          console.log('[realtime] Successfully joined group:', normalizedGroupId, 'Join info:', joinResult);
+        } catch (joinError) {
+          console.error('[realtime] Failed to join group:', joinError);
+        }
 
         // Rejoin group on reconnect
-        const handleReconnect = () => {
+        const handleReconnect = async () => {
           if (isMounted) {
             console.log('[realtime] Socket reconnected, rejoining group:', normalizedGroupId);
-            socketService.joinGroup(normalizedGroupId);
+            try {
+              const rejoinResult = await socketService.joinGroup(normalizedGroupId);
+              console.log('[realtime] Successfully rejoined group after reconnect:', rejoinResult);
+            } catch (rejoinError) {
+              console.error('[realtime] Failed to rejoin group after reconnect:', rejoinError);
+            }
           }
         };
         activeSocket.on('reconnect', handleReconnect);

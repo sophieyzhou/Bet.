@@ -8,6 +8,7 @@ let connectPromise = null;
 const getSocket = () => socket;
 
 const createSocket = (token) => {
+  console.log('[socket] Creating socket with URL:', SOCKET_BASE_URL);
   socket = io(SOCKET_BASE_URL, {
     transports: ['websocket'],
     autoConnect: false,
@@ -105,73 +106,81 @@ const disconnect = () => {
 };
 
 const joinGroup = (groupId) => {
-  if (!socket || !groupId) {
-    console.warn('[socket] Cannot join group - socket or groupId missing', { 
-      hasSocket: !!socket, 
-      groupId: groupId 
-    });
-    return;
-  }
+  return new Promise((resolve, reject) => {
+    if (!socket || !groupId) {
+      const msg = '[socket] Cannot join group - socket or groupId missing';
+      console.warn(msg, { 
+        hasSocket: !!socket, 
+        groupId: groupId 
+      });
+      reject(new Error(msg));
+      return;
+    }
 
-  // Ensure groupId is a string
-  const normalizedGroupId = String(groupId);
-  console.log('[socket] joinGroup called:', normalizedGroupId, 'socket.connected:', socket.connected, 'socket.id:', socket.id);
-  
-  // Helper to actually emit the join with verification
-  const emitJoin = () => {
-    if (!socket) {
-      console.error('[socket] Cannot emit join-group - socket is null');
-      return false;
-    }
+    // Ensure groupId is a string
+    const normalizedGroupId = String(groupId);
+    console.log('[socket] joinGroup called:', normalizedGroupId, 'socket.connected:', socket.connected, 'socket.id:', socket.id);
     
-    if (!socket.connected) {
-      console.warn('[socket] Cannot emit join-group - socket not connected. socket.connected:', socket.connected, 'socket.id:', socket.id);
-      return false;
-    }
-    
-    try {
-      console.log('[socket] Emitting join-group for:', normalizedGroupId, 'to server (socket.id:', socket.id + ')');
-      socket.emit('join-group', normalizedGroupId);
-      console.log('[socket] join-group event emitted successfully');
-      return true;
-    } catch (error) {
-      console.error('[socket] Error emitting join-group:', error);
-      return false;
-    }
-  };
-  
-  if (socket.connected) {
-    // Socket is already connected, join immediately
-    const success = emitJoin();
-    if (!success) {
-      console.warn('[socket] Failed to emit join-group immediately, will retry on next connect');
-      // Set up a listener to retry when it connects
-      const retryHandler = () => {
-        console.log('[socket] Retrying join-group after reconnection');
-        emitJoin();
-        socket.off('connect', retryHandler);
-      };
-      socket.once('connect', retryHandler);
-    }
-  } else {
-    // Socket not connected yet, wait for connection
-    console.warn('[socket] Socket not connected yet, waiting for connection before joining group:', normalizedGroupId);
-    // Use a named function so we can remove it if needed
-    const connectHandler = () => {
-      console.log('[socket] Socket connected in joinGroup handler, joining group:', normalizedGroupId);
-      // Add a small delay to ensure socket is fully ready
-      setTimeout(() => {
-        const success = emitJoin();
-        if (!success) {
-          console.error('[socket] Failed to emit join-group even after connection');
-        }
-      }, 50);
+    // Helper to actually emit the join with verification
+    const emitJoin = () => {
+      if (!socket) {
+        console.error('[socket] Cannot emit join-group - socket is null');
+        return false;
+      }
+      
+      if (!socket.connected) {
+        console.warn('[socket] Cannot emit join-group - socket not connected. socket.connected:', socket.connected, 'socket.id:', socket.id);
+        return false;
+      }
+      
+      try {
+        console.log('[socket] Emitting join-group for:', normalizedGroupId, 'to server (socket.id:', socket.id + ')');
+        
+        // Emit with acknowledgement callback
+        socket.emit('join-group', normalizedGroupId, (response) => {
+          console.log('[socket] join-group acknowledged by server:', response);
+          resolve(response);
+        });
+        
+        console.log('[socket] join-group event emitted successfully');
+        return true;
+      } catch (error) {
+        console.error('[socket] Error emitting join-group:', error);
+        reject(error);
+        return false;
+      }
     };
     
-    // Remove any existing listener to avoid duplicates
-    socket.off('connect', connectHandler);
-    socket.once('connect', connectHandler);
-  }
+    if (socket.connected) {
+      // Socket is already connected, join immediately
+      const success = emitJoin();
+      if (!success) {
+        console.warn('[socket] Failed to emit join-group immediately, will retry on next connect');
+        // Set up a listener to retry when it connects
+        const retryHandler = () => {
+          console.log('[socket] Retrying join-group after reconnection');
+          emitJoin();
+          socket.off('connect', retryHandler);
+        };
+        socket.once('connect', retryHandler);
+      }
+    } else {
+      // Socket not connected yet, wait for connection
+      console.warn('[socket] Socket not connected yet, waiting for connection before joining group:', normalizedGroupId);
+      // Use a named function so we can remove it if needed
+      const connectHandler = () => {
+        console.log('[socket] Socket connected in joinGroup handler, joining group:', normalizedGroupId);
+        // Add a small delay to ensure socket is fully ready
+        setTimeout(() => {
+          emitJoin();
+        }, 50);
+      };
+      
+      // Remove any existing listener to avoid duplicates
+      socket.off('connect', connectHandler);
+      socket.once('connect', connectHandler);
+    }
+  });
 };
 
 const leaveGroup = (groupId) => {

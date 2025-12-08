@@ -1,5 +1,9 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+
+const INSTANCE_ID = crypto.randomBytes(4).toString('hex');
+console.log('[ws] Server Instance ID initialized:', INSTANCE_ID);
 
 let io = null;
 
@@ -28,6 +32,12 @@ function getRoomSize(roomName) {
   if (!io) return 0;
   const room = io.sockets?.adapter?.rooms?.get(roomName);
   return room ? room.size : 0;
+}
+
+function getRoomMembers(roomName) {
+  if (!io) return [];
+  const room = io.sockets?.adapter?.rooms?.get(roomName);
+  return room ? Array.from(room) : [];
 }
 
 function initializeRealtime(httpServer, { origins = [] } = {}) {
@@ -59,23 +69,45 @@ function initializeRealtime(httpServer, { origins = [] } = {}) {
 
   io.on('connection', (socket) => {
     const userId = socket.data?.userId;
-    console.log('[ws] connect', { socketId: socket.id, userId });
+    console.log('[ws] connect', { 
+      instanceId: INSTANCE_ID,
+      socketId: socket.id, 
+      userId,
+      address: socket.handshake.address,
+      xForwardedFor: socket.handshake.headers['x-forwarded-for']
+    });
 
-    socket.on('join-group', (groupIdRaw) => {
+    socket.on('join-group', (groupIdRaw, callback) => {
       const groupId = String(groupIdRaw);
       socket.join(groupId);
+      const members = getRoomMembers(groupId);
+      
       console.log('[ws] join-group', {
+        instanceId: INSTANCE_ID,
         socketId: socket.id,
         userId,
         groupId,
-        roomSize: getRoomSize(groupId)
+        roomSize: members.length,
+        members
       });
+
+      // Acknowledge the join if client provided a callback
+      if (typeof callback === 'function') {
+        callback({
+          status: 'joined',
+          groupId,
+          roomSize: members.length,
+          instanceId: INSTANCE_ID,
+          socketId: socket.id
+        });
+      }
     });
 
     socket.on('leave-group', (groupIdRaw) => {
       const groupId = String(groupIdRaw);
       socket.leave(groupId);
       console.log('[ws] leave-group', {
+        instanceId: INSTANCE_ID,
         socketId: socket.id,
         userId,
         groupId,
@@ -84,7 +116,12 @@ function initializeRealtime(httpServer, { origins = [] } = {}) {
     });
 
     socket.on('disconnect', (reason) => {
-      console.log('[ws] disconnect', { socketId: socket.id, userId, reason });
+      console.log('[ws] disconnect', { 
+        instanceId: INSTANCE_ID,
+        socketId: socket.id, 
+        userId, 
+        reason 
+      });
     });
   });
 
@@ -99,6 +136,7 @@ function emitToGroup(groupIdRaw, eventName, payload) {
   const groupId = String(groupIdRaw);
   io.to(groupId).emit(eventName, payload);
   console.log('[ws] emit', {
+    instanceId: INSTANCE_ID,
     eventName,
     groupId,
     roomSize: getRoomSize(groupId),
