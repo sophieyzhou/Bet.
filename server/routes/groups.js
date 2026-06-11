@@ -322,6 +322,24 @@ router.put('/:groupId', verifyToken, async (req, res) => {
         // Fetch updated rules for response
         const updatedRules = await Rule.find({ groupId: group._id });
 
+        // Emit group:update to notify clients
+        try {
+            const sortedMembers = [...group.members].sort((a, b) => b.totalPoints - a.totalPoints);
+            emitToGroup(group._id, 'group:update', {
+                _id: group._id,
+                name: group.name,
+                description: group.description,
+                joinCode: group.joinCode,
+                members: sortedMembers,
+                memberCount: group.members.length,
+                rules: updatedRules,
+                createdAt: group.createdAt,
+                createdBy: group.createdBy
+            });
+        } catch (emitErr) {
+            console.error('Failed to emit group update after edit:', emitErr?.message || emitErr);
+        }
+
         res.json({
             success: true,
             group: {

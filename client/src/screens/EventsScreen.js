@@ -37,6 +37,13 @@ export default function EventsScreen({ route, onGroupDataRefresh }) {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [selectedFilter, setSelectedFilter] = useState('all');
     const [showSubmitModal, setShowSubmitModal] = useState(false);
+    const [currentGroupData, setCurrentGroupData] = useState(groupData);
+
+    useEffect(() => {
+        if (groupData) {
+            setCurrentGroupData(groupData);
+        }
+    }, [groupData]);
 
     useEffect(() => {
         fetchEvents();
@@ -67,9 +74,14 @@ export default function EventsScreen({ route, onGroupDataRefresh }) {
         setEvents(prev => prev.filter(e => e._id !== id));
     }, []);
 
+    const handleGroupUpdate = useCallback((payload) => {
+        setCurrentGroupData(payload);
+    }, []);
+
     // Subscribe to realtime group events
     useGroupRealtime({
         groupId,
+        onGroupUpdate: handleGroupUpdate,
         onEventNew: handleEventNew,
         onEventUpdate: handleEventUpdate,
         onEventDelete: handleEventDelete,
@@ -279,8 +291,8 @@ export default function EventsScreen({ route, onGroupDataRefresh }) {
             <SubmitEventModal
                 visible={showSubmitModal}
                 onClose={() => setShowSubmitModal(false)}
-                members={groupData?.members || []}
-                rules={groupData?.rules || []}
+                members={currentGroupData?.members || []}
+                rules={currentGroupData?.rules || []}
                 onSubmit={handleSubmitEvent}
             />
         </SafeAreaView>
